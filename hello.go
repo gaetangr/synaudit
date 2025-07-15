@@ -3,8 +3,35 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
-	"fmt" // Ajoute ceci pour lire le corps
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
+)
+
+// Security-related API endpoints
+const (
+	APIDSMSecurity      = "SYNO.Core.Security.DSM"
+	APIDSMSecurityEmbed = "SYNO.Core.Security.DSM.Embed"
+	APISmartBlock       = "SYNO.Core.SmartBlock"
+	APIFirewall         = "SYNO.Core.Security.Firewall"
+	APIFirewallConf     = "SYNO.Core.Security.Firewall.Conf"
+	APIAutoBlock        = "SYNO.Core.Security.AutoBlock"
+	APIDoSProtection    = "SYNO.Core.Security.DoS"
+	APITLSProfile       = "SYNO.Core.Web.Security.TLSProfile"
+	APIHTTPCompression  = "SYNO.Core.Web.Security.HTTPCompression"
+	APISpectreMeltdown  = "SYNO.Core.Hardware.SpectreMeltdown"
+)
+
+// Authentication and access control
+const (
+	APIOTPEnforcePolicy = "SYNO.Core.OTP.EnforcePolicy"
+	APISecureSignInAMFA = "SYNO.SecureSignIn.AMFA.Policy"
+)
+
+// User and system management
+const (
+	APIUserList = "SYNO.Core.User"
 )
 
 type SynauditConfig struct {
@@ -23,7 +50,6 @@ type SynologyPorts struct {
 	protocol string
 }
 
-// SynologyErrorCode représente un code d'erreur et sa signification
 type SynologyErrorCode struct {
 	Code        int
 	Description string
@@ -64,7 +90,6 @@ var SynologyErrorCodes = []SynologyErrorCode{
 	{150, "Request source IP does not match the login IP."},
 }
 
-// Structure pour la réponse JSON attendue
 type SynologyLoginResponse struct {
 	Data struct {
 		SID string `json:"sid"`
@@ -75,6 +100,15 @@ type SynologyLoginResponse struct {
 	} `json:"error"`
 }
 
+type UserListData struct {
+	Offset int `json:"offset"`
+	Total  int `json:"total"`
+	Users  []struct {
+		Expired string `json:"expired"`
+		Name    string `json:"name"`
+	} `json:"users"`
+}
+
 func getErrorDescription(error int) string {
 	for _, errorCode := range SynologyErrorCodes {
 		if error == errorCode.Code {
@@ -82,6 +116,20 @@ func getErrorDescription(error int) string {
 		}
 	}
 	return "Unknown error"
+}
+
+type SecurityAuditResponse struct {
+	Data struct {
+		HasFail bool `json:"has_fail"`
+		Result  []struct {
+			API     string      `json:"api"`
+			Data    interface{} `json:"data"`
+			Method  string      `json:"method"`
+			Success bool        `json:"success"`
+			Version int         `json:"version"`
+		} `json:"result"`
+	} `json:"data"`
+	Success bool `json:"success"`
 }
 
 func login(user *SynauditUser) (string, error) {
@@ -115,9 +163,49 @@ func login(user *SynauditUser) (string, error) {
 	return loginResp.Data.SID, nil
 }
 
+type SecurityAuditDecoder struct {
+	response SecurityAuditResponse
+}
+
+func NewSecurityAuditDecoder(jsonData []byte) (*SecurityAuditDecoder, error) {
+	var response SecurityAuditResponse
+	if err := json.Unmarshal(jsonData, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return &SecurityAuditDecoder{response: response}, nil
+}
+
+func (d *SecurityAuditDecoder) GetUserListData() (*UserListData, error) {
+	result, err := d.getTypedData("SYNO.Core.User", &UserListData{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*UserListData), nil
+}
+
+// Generic method to extract and unmarshal specific API data
+func (d *SecurityAuditDecoder) getTypedData(apiName string, target interface{}) (interface{}, error) {
+	for _, result := range d.response.Data.Result {
+		if result.API == apiName {
+			dataBytes, err := json.Marshal(result.Data)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal data for %s: %w", apiName, err)
+			}
+
+			if err := json.Unmarshal(dataBytes, target); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal %s data: %w", apiName, err)
+			}
+
+			return target, nil
+		}
+	}
+	return nil, fmt.Errorf("API %s not found in response", apiName)
+}
+
 func main() {
 	//login(&SynauditUser{username: "webdav", password: "Whinny1-Disperser8-Frolic9-Ranged5-Situation5s"})
-	fmt.Printf(getErrorDescription(107))
+
 	// https://kb.synology.com/en-us/DSM/tutorial/What_network_ports_are_used_by_Synology_services
 	// services := []SynologyPorts{
 	// 	{
@@ -173,4 +261,35 @@ func main() {
 	// 		conn.Close()
 	// 	}
 	// }
+
+	url := "https://192.168.1.198:8443/webapi/entry.cgi"
+	method := "POST"
+	payload := strings.NewReader("api=SYNO.Entry.Request&method=request&version=1&stop_when_error=false&mode=%22sequential%22&compound=%5B%7B%22api%22%3A%22SYNO.Core.Security.DSM%22%2C%22method%22%3A%22get%22%2C%22version%22%3A5%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.DSM.Embed%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.OTP.EnforcePolicy%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.SecureSignIn.AMFA.Policy%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.SmartBlock%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.Firewall.Conf%22%2C%22method%22%3A%22get%22%2C%22version%22%3A%221%22%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.AutoBlock%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.DoS%22%2C%22method%22%3A%22get%22%2C%22version%22%3A2%2C%22configs%22%3A%5B%7B%22adapter%22%3A%22eth0%22%7D%2C%7B%22adapter%22%3A%22eth1%22%7D%2C%7B%22adapter%22%3A%22pppoe%22%7D%5D%7D%2C%7B%22api%22%3A%22SYNO.Core.Web.Security.HTTPCompression%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Web.Security.TLSProfile%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Hardware.SpectreMeltdown%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Storage.CGI.KMIP%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.Firewall%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.User%22%2C%22method%22%3A%22list%22%2C%22version%22%3A1%2C%22type%22%3A%22local%22%2C%22additional%22%3A%5B%22expired%22%5D%7D%2C%7B%22api%22%3A%22SYNO.Core.System%22%2C%22method%22%3A%22info%22%2C%22version%22%3A3%7D%2C%7B%22api%22%3A%22SYNO.Core.QuickConnect%22%2C%22method%22%3A%22get%22%2C%22version%22%3A2%7D%2C%7B%22api%22%3A%22SYNO.Core.Upgrade.Server%22%2C%22method%22%3A%22check%22%2C%22version%22%3A3%2C%22user_reading%22%3Atrue%2C%22need_auto_smallupdate%22%3Atrue%2C%22need_promotion%22%3Atrue%7D%5D")
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Since a lot of Synology Nas have self signed certificat...
+	}
+	client := &http.Client{Transport: tr}
+
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Cookie", "id=uLbrFS4jTqElQmCf9MvKGuHNEWrW5s08j-g_8t4NR7MlWqlu3IzwUWOUS_jv_E9iZwoPgzotsskTiYLdb17eKA; did=cos6gbAOdIBofOExp1JzMdjnnQMkJHc_TdE9JfbNPF1UWRLAnkq0LhxWCxQrGZ4DrG6xDeUNlm8EG_5McVh8Qg; id=uLbrFS4jTqElQmCf9MvKGuHNEWrW5s08j-g_8t4NR7MlWqlu3IzwUWOUS_jv_E9iZwoPgzotsskTiYLdb17eKA")
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	decoder, err := NewSecurityAuditDecoder([]byte(body))
+	users, _ := decoder.GetUserListData()
+	fmt.Printf("%v", users)
+
 }
