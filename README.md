@@ -15,7 +15,9 @@ Synaudit is built using the Go langage, it's extremeley fast and does not requir
 
 # The Synology API 
 
-Synology offers an api that can be consumed for all sort of thing such as 
+Synology offers an api that can be consumed for all sort of thing such as checking latest update, firewall rules etc, but no documentation is avaiblabe to list all endpoint with proprer parameters and description, the document available here https://kb.synology.com/fr-fr/DG/DSM_Login_Web_API_Guide/2 provides some insight in the api.
+
+Fortunaly with a bit of reverse enegneirg, we can see that the dsm interface is using a the api in a different manner that make the consumetion much faster and easier using the compound in the body and the id key in the cookie
 
 # Features 
 
@@ -27,3 +29,5 @@ THis is a list of rules we are doing :
 - Ability to brute force the DMS login page with big leaked database
 - Recommandtions based on (to be filled)
 - 
+
+disclaimer : to perform the security checks, an user with admin privielge is required on your synolgy nas, all networks call are made to your local nas IP, nothing is transmided, code is open source and can be check yourself.

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Security-related API endpoints
@@ -33,6 +34,30 @@ const (
 const (
 	APIUserList = "SYNO.Core.User"
 )
+
+const (
+	UserDisabled = "now"
+	UserActive   = "normal"
+)
+
+// Security levels
+type SecurityLevel int
+
+const (
+	SecurityLevelCritical SecurityLevel = iota
+	SecurityLevelHigh
+	SecurityLevelMedium
+	SecurityLevelLow
+	SecurityLevelInfo
+)
+
+type SecurityFinding struct {
+	Level       SecurityLevel `json:"level"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Remediation string        `json:"remediation"`
+	Value       interface{}   `json:"value"`
+}
 
 type SynauditConfig struct {
 	host string
@@ -101,12 +126,20 @@ type SynologyLoginResponse struct {
 }
 
 type UserListData struct {
-	Offset int `json:"offset"`
-	Total  int `json:"total"`
-	Users  []struct {
+	Total int `json:"total"`
+	Users []struct {
 		Expired string `json:"expired"`
 		Name    string `json:"name"`
 	} `json:"users"`
+}
+type FirewallData struct {
+	EnableFirewall bool   `json:"enable_firewall"`
+	ProfileName    string `json:"profile_name"`
+}
+
+type SecurityReport struct {
+	Timestamp time.Time         `json:"timestamp"`
+	Findings  []SecurityFinding `json:"findings"`
 }
 
 func getErrorDescription(error int) string {
@@ -184,6 +217,30 @@ func (d *SecurityAuditDecoder) GetUserListData() (*UserListData, error) {
 	return result.(*UserListData), nil
 }
 
+func (d *SecurityAuditDecoder) GetFirewallData() (*FirewallData, error) {
+
+	result, err := d.getTypedData(APIFirewall, &FirewallData{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*FirewallData), nil
+}
+
+func (u UserListData) IsAdminDisabled() *SecurityFinding {
+	for _, user := range u.Users {
+		if user.Name == "admin" && user.Expired == UserDisabled {
+
+			return &SecurityFinding{
+				Level:       SecurityLevelHigh,
+				Title:       "Admin disabled",
+				Description: "Admin is disabled in user list",
+				Value:       user,
+			}
+		}
+	}
+	return nil
+}
+
 // Generic method to extract and unmarshal specific API data
 func (d *SecurityAuditDecoder) getTypedData(apiName string, target interface{}) (interface{}, error) {
 	for _, result := range d.response.Data.Result {
@@ -201,6 +258,43 @@ func (d *SecurityAuditDecoder) getTypedData(apiName string, target interface{}) 
 		}
 	}
 	return nil, fmt.Errorf("API %s not found in response", apiName)
+}
+
+type SecurityAuditor struct {
+	decoder *SecurityAuditDecoder
+}
+
+func NewSecurityAuditor(decoder *SecurityAuditDecoder) *SecurityAuditor {
+	return &SecurityAuditor{decoder: decoder}
+}
+
+func (a *SecurityAuditor) PerformComprehensiveAudit() (*SecurityReport, error) {
+	report := &SecurityReport{
+		Timestamp: time.Now(),
+		Findings:  []SecurityFinding{},
+	}
+
+	checks := []func() []SecurityFinding{}
+
+	for _, check := range checks {
+		findings := check()
+		report.Findings = append(report.Findings, findings...)
+	}
+
+	return report, nil
+}
+func (a *SecurityAuditor) checkAdminIsDisabled() []SecurityFinding {
+	var findings []SecurityFinding
+
+	userList, err := a.decoder.GetUserListData()
+	if err != nil {
+		return findings
+	}
+
+	if finding := userList.IsAdminDisabled(); finding != nil {
+		findings = append(findings, *finding)
+	}
+	return findings
 }
 
 func main() {
@@ -288,8 +382,22 @@ func main() {
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
-	decoder, err := NewSecurityAuditDecoder([]byte(body))
-	users, _ := decoder.GetUserListData()
-	fmt.Printf("%v", users)
+	decoder, err := NewSecurityAuditDecoder(body)
+	if err != nil {
+		fmt.Printf("Error creating decoder: %v\n", err)
+		return
+	}
 
+	// Perform comprehensive security audit
+	auditor := NewSecurityAuditor(decoder)
+	report, err := auditor.PerformComprehensiveAudit()
+	if err != nil {
+		fmt.Printf("Error performing audit: %v\n", err)
+		return
+	}
+	fmt.Printf("=== SYNOLOGY SECURITY AUDIT REPORT ===\n")
+	fmt.Printf("Timestamp: %s\n", report.Timestamp.Format(time.RFC3339))
+	for _, finding := range report.Findings {
+		fmt.Printf(finding.Description)
+	}
 }
