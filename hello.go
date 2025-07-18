@@ -165,37 +165,6 @@ type SecurityAuditResponse struct {
 	Success bool `json:"success"`
 }
 
-func login(user *SynauditUser) (string, error) {
-	config := SynauditConfig{
-		host: "https://192.168.1.198:8443",
-	}
-
-	url := fmt.Sprintf("%s/webapi/entry.cgi?api=SYNO.API.Auth&version=6&method=login&account=%s&passwd=%s&format=sid", config.host, user.username, user.password)
-	var loginResp SynologyLoginResponse
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Since a lot of Synology Nas have self signed certificat...
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Get(url)
-	if err != nil {
-		fmt.Printf("HTTP request failed: %v\n", err)
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&loginResp)
-	if err != nil {
-		fmt.Printf("Error decoding JSON response: %v\n", err)
-		return "", err
-	}
-	if !loginResp.Success {
-		fmt.Printf("Erreur Synology (code %d): %s\n", loginResp.Error.Code, getErrorDescription(loginResp.Error.Code))
-	} else {
-		fmt.Printf("SID: %s\n", loginResp.Data.SID)
-	}
-	return loginResp.Data.SID, nil
-}
-
 type SecurityAuditDecoder struct {
 	response SecurityAuditResponse
 }
@@ -274,7 +243,7 @@ func (a *SecurityAuditor) PerformComprehensiveAudit() (*SecurityReport, error) {
 		Findings:  []SecurityFinding{},
 	}
 
-	checks := []func() []SecurityFinding{}
+	checks := []func() []SecurityFinding{a.checkAdminIsDisabled}
 
 	for _, check := range checks {
 		findings := check()
@@ -398,6 +367,6 @@ func main() {
 	fmt.Printf("=== SYNOLOGY SECURITY AUDIT REPORT ===\n")
 	fmt.Printf("Timestamp: %s\n", report.Timestamp.Format(time.RFC3339))
 	for _, finding := range report.Findings {
-		fmt.Printf(finding.Description)
+		fmt.Printf("%s", finding)
 	}
 }
