@@ -46,6 +46,19 @@ func getUserData(response SynologyResponse) (UserListData, error) {
 	return UserListData{}, fmt.Errorf("API %s non trouvée", endpoint)
 }
 
+func checkIsAdminDisabled(userListData UserListData) bool {
+	for _, user := range userListData.Users {
+		if user.Name == "admin" {
+			if user.Expired == "now" {
+				fmt.Println("Disabled")
+				return true
+			}
+		}
+	}
+	fmt.Println("enabled")
+	return false
+}
+
 func main() {
 
 	url := "https://192.168.1.198:8443/webapi/entry.cgi"
@@ -94,25 +107,7 @@ func main() {
 		fmt.Printf("Erreur getUserData: %v\n", err)
 		return
 	}
-
-	fmt.Printf("📊 Total users: %d\n", userData.Total)
-
-	// Vérifier admin
-	adminFound := false
-	for _, user := range userData.Users {
-		if user.Name == "admin" {
-			adminFound = true
-			if user.Expired == "now" {
-				fmt.Println("⚠️  Admin est DISABLED!")
-			} else {
-				fmt.Println("✅ Admin est ENABLED")
-			}
-			break
-		}
-	}
-
-	if !adminFound {
-		fmt.Println("❓ User admin non trouvé")
-	}
+	fmt.Println(userData)
+	checkIsAdminDisabled(userData)
 
 }
