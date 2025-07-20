@@ -68,3 +68,23 @@ func getUserData(response SynologyResponse) (UserListData, error) {
 	}
 	return UserListData{}, fmt.Errorf("API %s not found", endpoint)
 }
+
+func getFirewallData(response SynologyResponse) (FirewallData, error) {
+	endpoint := "SYNO.Core.Security.Firewall"
+	for _, result := range response.Data.Result {
+		if endpoint == result.API {
+			jsonBytes, err := json.Marshal(result.Data)
+			if err != nil {
+				return FirewallData{}, err
+			}
+			var firewallData FirewallData
+			err = json.Unmarshal(jsonBytes, &firewallData)
+			if err != nil {
+				return FirewallData{}, err
+			}
+			return firewallData, nil
+		}
+
+	}
+	return FirewallData{}, fmt.Errorf("not found")
+}

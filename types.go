@@ -16,6 +16,10 @@ type UserListData struct {
 	} `json:"users"`
 }
 
+type FirewallData struct {
+	Enable_firewall bool `json:"enable_firewall"`
+}
+
 type Finding struct {
 	Title       string
 	Description string

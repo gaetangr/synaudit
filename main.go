@@ -15,7 +15,6 @@ func main() {
 		fmt.Printf("❌ Error: %v\n", err)
 		return
 	}
-
 	report, err := generateReport(*response)
 	if err != nil {
 		fmt.Printf("❌ Error generating report: %v\n", err)
@@ -23,13 +22,5 @@ func main() {
 	}
 
 	displayReport(report)
-
-	host, err := extractHost(url)
-	if err != nil {
-		fmt.Printf("❌ Error parsing host: %v\n", err)
-	}
-	results := scanPorts(host)
-
-	displayPortResults(results)
 
 }
