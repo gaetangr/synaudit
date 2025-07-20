@@ -23,6 +23,11 @@ func main() {
 	}
 
 	displayReport(report)
-	scanPorts(extractHost(url))
+
+	host, err := extractHost(url)
+	if err != nil {
+		fmt.Printf("❌ Error parsing host: %v\n", err)
+	}
+	scanPorts(host)
 
 }
