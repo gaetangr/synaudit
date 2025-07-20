@@ -23,6 +23,6 @@ func main() {
 	}
 
 	displayReport(report)
-	scanPorts(url)
+	scanPorts(extractHost(url))
 
 }

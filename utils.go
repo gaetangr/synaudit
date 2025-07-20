@@ -33,13 +33,14 @@ func loadEnv() error {
 	return scanner.Err()
 }
 
-func extractHost(urlString string) (string, error) {
+func extractHost(urlString string) string {
 	parsedURL, err := url.Parse(urlString)
 	if err != nil {
 
 		fmt.Printf("❌ Error parsing URL: %v\n", err)
-		return "", err
+		return ""
+
 	}
-	return parsedURL.Hostname(), nil
+	return parsedURL.Hostname()
 
 }
