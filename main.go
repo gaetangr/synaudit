@@ -28,6 +28,8 @@ func main() {
 	if err != nil {
 		fmt.Printf("❌ Error parsing host: %v\n", err)
 	}
-	scanPorts(host)
+	results := scanPorts(host)
+
+	displayPortResults(results)
 
 }
