@@ -41,6 +41,15 @@ func checkFirewallStatus(firewallData FirewallData) []Finding {
 	return []Finding{}
 }
 
+func checkOptStatus(optData EnforcePolicyOptData) []Finding {
+	var findings []Finding
+
+	if optData.OtpEnforceOption != EnforcePolicyAdmin && optData.OtpEnforceOption != EnforcePolicyUser {
+		return append(findings, SecurityFindings["NO_2FA_ENFORCED_ADMIN"])
+	}
+	return []Finding{}
+}
+
 func generateReport(response SynologyResponse) (*SecurityReport, error) {
 	report := &SecurityReport{
 		CheckedAt: time.Now(),
@@ -61,6 +70,14 @@ func generateReport(response SynologyResponse) (*SecurityReport, error) {
 				return nil, err
 			}
 			return checkFirewallStatus(data), nil
+		},
+
+		"opt": func() ([]Finding, error) {
+			data, err := getOptData(response)
+			if err != nil {
+				return nil, err
+			}
+			return checkOptStatus(data), nil
 		},
 	}
 

@@ -33,6 +33,7 @@ func fetchSynologyData(url string) (*SynologyResponse, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+
 	if err != nil {
 		return nil, fmt.Errorf("reading body: %w", err)
 	}
@@ -43,22 +44,24 @@ func fetchSynologyData(url string) (*SynologyResponse, error) {
 		return nil, fmt.Errorf("parsing JSON: %w", err)
 	}
 
-	if !response.Success {
-		return nil, fmt.Errorf("synology API returned success=false")
-	}
-
 	return &response, nil
 }
 
 func getUserData(response SynologyResponse) (UserListData, error) {
 	endpoint := "SYNO.Core.User"
+	var userData UserListData
 	for _, result := range response.Data.Result {
+		if !response.Success {
+			return UserListData{}, fmt.Errorf("API %s failed ",
+				endpoint)
+		}
 		if result.API == endpoint {
+
 			jsonBytes, err := json.Marshal(result.Data)
 			if err != nil {
 				return UserListData{}, err
 			}
-			var userData UserListData
+
 			err = json.Unmarshal(jsonBytes, &userData)
 			if err != nil {
 				return UserListData{}, err
@@ -71,14 +74,18 @@ func getUserData(response SynologyResponse) (UserListData, error) {
 
 func getFirewallData(response SynologyResponse) (FirewallData, error) {
 	endpoint := "SYNO.Core.Security.Firewall"
+	var firewallData FirewallData
 	for _, result := range response.Data.Result {
 		if endpoint == result.API {
-			fmt.Println(result)
+			if !response.Success {
+				return FirewallData{}, fmt.Errorf("API %s failed ",
+					endpoint)
+			}
 			jsonBytes, err := json.Marshal(result.Data)
 			if err != nil {
 				return FirewallData{}, err
 			}
-			var firewallData FirewallData
+
 			err = json.Unmarshal(jsonBytes, &firewallData)
 			if err != nil {
 				return FirewallData{}, err
@@ -88,4 +95,29 @@ func getFirewallData(response SynologyResponse) (FirewallData, error) {
 
 	}
 	return FirewallData{}, fmt.Errorf("not found")
+}
+
+func getOptData(response SynologyResponse) (EnforcePolicyOptData, error) {
+	endpoint := "SYNO.Core.OTP.EnforcePolicy"
+	var optData EnforcePolicyOptData
+	for _, result := range response.Data.Result {
+		if endpoint == result.API {
+			if !response.Success {
+				return EnforcePolicyOptData{}, fmt.Errorf("API %s failed ",
+					endpoint)
+			}
+			jsonBytes, err := json.Marshal(result.Data)
+			if err != nil {
+				return EnforcePolicyOptData{}, err
+			}
+
+			err = json.Unmarshal(jsonBytes, &optData)
+			if err != nil {
+				return EnforcePolicyOptData{}, err
+			}
+			return optData, nil
+		}
+
+	}
+	return EnforcePolicyOptData{}, fmt.Errorf("not found")
 }

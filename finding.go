@@ -14,7 +14,7 @@ var SecurityFindings = map[string]Finding{
 		Description: "Password requirements are not strong enough to prevent brute force attacks",
 		Remediation: "Enable password strength rules and set minimum length to 10+ characters",
 	},
-	"NO_2FA_ENFORCED": {
+	"NO_2FA_ENFORCED_ADMIN": {
 		Title:       "Two-factor authentication not enforced",
 		Description: "2FA is not mandatory for admin accounts, reducing security",
 		Remediation: "Enable and enforce 2FA for all users with admin privileges",

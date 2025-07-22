@@ -2,17 +2,31 @@ package main
 
 import "time"
 
+type EnforcePolicy string
+
 const (
-	UserStatusExpired = "now"
-	UserStatusActive  = "normal"
-	AdminUsername     = "admin"
+	EnforcePolicyAdmin EnforcePolicy = "admin"
+	EnforcePolicyUser  EnforcePolicy = "user"
+	NoEnforcePolicy    EnforcePolicy = "none"
+)
+
+type EnforcePolicyOptData struct {
+	OtpEnforceOption EnforcePolicy `json:"otp_enforce_option"`
+}
+
+type UserStatus string
+
+const (
+	UserStatusExpired UserStatus = "now"
+	UserStatusActive  UserStatus = "normal"
+	AdminUsername                = "admin"
 )
 
 type UserListData struct {
 	Total int `json:"total"`
 	Users []struct {
-		Expired string `json:"expired"`
-		Name    string `json:"name"`
+		Expired UserStatus `json:"expired"`
+		Name    string     `json:"name"`
 	} `json:"users"`
 }
 
@@ -36,7 +50,8 @@ type APIResult struct {
 	Data interface{} `json:"data"`
 }
 type SynologyResponseData struct {
-	Result []APIResult `json:"result"`
+	HasFail bool        `json:"has_fail"`
+	Result  []APIResult `json:"result"`
 }
 
 type SynologyResponse struct {
