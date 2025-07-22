@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
 func IsAdminDisabled(userListData UserListData) (bool, error) {
 	for _, user := range userListData.Users {
 		if user.Name == AdminUsername {
+			fmt.Printf("DEBUG: Admin user found - expired: %s\n", user.Expired)
 
 			if user.Expired == UserStatusExpired {
 				return true, nil
@@ -15,80 +17,83 @@ func IsAdminDisabled(userListData UserListData) (bool, error) {
 			return false, nil
 		}
 	}
-
 	return false, fmt.Errorf("admin user not found")
 }
 
 func checkAdminStatus(userData UserListData) []Finding {
 	var findings []Finding
 
-	disabled, err := IsAdminDisabled(userData)
-	if err != nil {
-		findings = append(findings, Finding{
-			Title:       "Admin User Not Found",
-			Description: "The admin account does not exist in the system",
-			Remediation: "Investigate why the admin account is missing",
-		})
-		return findings
-	}
+	disabled, _ := IsAdminDisabled(userData)
 
-	if disabled {
-		findings = append(findings, Finding{
-			Title:       "Admin Account Disabled",
-			Description: "The admin account is currently disabled (expired status: 'now')",
-			Remediation: "Re-enable the admin account if this was not intentional",
-		})
+	if !disabled {
+		findings = append(findings, SecurityFindings["ADMIN_ACCOUNT_ACTIVE"])
 	}
 
 	return findings
 }
+
+func checkFirewallStatus(firewallData FirewallData) []Finding {
+	var findings []Finding
+
+	if !firewallData.Enable_firewall {
+		return append(findings, SecurityFindings["FIREWALL_DISABLED"])
+	}
+	return []Finding{}
+}
+
 func generateReport(response SynologyResponse) (*SecurityReport, error) {
 	report := &SecurityReport{
 		CheckedAt: time.Now(),
 		Findings:  []Finding{},
 	}
 
-	userData, err := getUserData(response)
-
-	if err != nil {
-		return report, err
+	checks := map[string]func() ([]Finding, error){
+		"users": func() ([]Finding, error) {
+			data, err := getUserData(response)
+			if err != nil {
+				return nil, err
+			}
+			return checkAdminStatus(data), nil
+		},
+		"firewall": func() ([]Finding, error) {
+			data, err := getFirewallData(response)
+			if err != nil {
+				return nil, err
+			}
+			return checkFirewallStatus(data), nil
+		},
 	}
 
-	report.Findings = append(report.Findings, checkAdminStatus(userData)...)
+	for name, check := range checks {
+		findings, err := check()
+		if err != nil {
+
+			fmt.Printf("Warning: %s check failed: %v\n", name, err)
+			continue
+		}
+		report.Findings = append(report.Findings, findings...)
+	}
 
 	return report, nil
 }
+
 func displayReport(report *SecurityReport) {
 	fmt.Println("\n🔍 SECURITY AUDIT REPORT")
-	fmt.Println("═══════════════════════════════════════════════════════════════════════════════")
 	fmt.Printf("📅 Checked at: %s\n", report.CheckedAt.Format("2006-01-02 15:04:05"))
-	fmt.Printf("📊 Total issues: %d\n\n", len(report.Findings))
+	fmt.Printf("📊 Total issues: %d\n", len(report.Findings))
 
 	if len(report.Findings) == 0 {
-		fmt.Println("✅ No security issues found! Your Synology appears to be well configured.")
+		fmt.Println("\n✅ No security issues found!")
 		return
 	}
 
-	fmt.Println("┌────┬─────────────────────────────────────────┬──────────────────────────────────────────────┐")
-	fmt.Println("│ #  │ Issue                                   │ Description                                  │")
-	fmt.Println("├────┼─────────────────────────────────────────┼──────────────────────────────────────────────┤")
+	fmt.Println("\n" + strings.Repeat("─", 80))
 
 	for i, finding := range report.Findings {
-		fmt.Printf("│ %-2d │ %-39s │ %-44s │\n",
-			i+1,
-			truncateString(finding.Title, 39),
-			truncateString(finding.Description, 44))
+		fmt.Printf("\n[%d] %s\n", i+1, finding.Title)
+		fmt.Printf("    ⚠️  %s\n", finding.Description)
+		fmt.Printf("    💡 %s\n", finding.Remediation)
 	}
 
-	fmt.Println("└────┴─────────────────────────────────────────┴──────────────────────────────────────────────┘")
-
-	fmt.Println("\n🔧 RECOMMENDED ACTIONS:")
-	fmt.Println("═══════════════════════════════════════════════════════════════════════════════")
-
-	for i, finding := range report.Findings {
-		fmt.Printf("\n%d. %s\n", i+1, finding.Title)
-		fmt.Printf("   💡 Solution: %s\n", finding.Remediation)
-	}
-
-	fmt.Println("\n═══════════════════════════════════════════════════════════════════════════════")
+	fmt.Println("\n" + strings.Repeat("─", 80))
 }

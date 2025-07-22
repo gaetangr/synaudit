@@ -11,7 +11,7 @@ import (
 )
 
 func fetchSynologyData(url string) (*SynologyResponse, error) {
-	payload := strings.NewReader("api=SYNO.Entry.Request&method=request&version=1&stop_when_error=false&mode=%22sequential%22&compound=%5B%7B%22api%22%3A%22SYNO.Core.Security.DSM%22%2C%22method%22%3A%22get%22%2C%22version%22%3A5%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.DSM.Embed%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.OTP.EnforcePolicy%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.SecureSignIn.AMFA.Policy%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.SmartBlock%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.Firewall.Conf%22%2C%22method%22%3A%22get%22%2C%22version%22%3A%221%22%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.AutoBlock%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.DoS%22%2C%22method%22%3A%22get%22%2C%22version%22%3A2%2C%22configs%22%3A%5B%7B%22adapter%22%3A%22eth0%22%7D%2C%7B%22adapter%22%3A%22eth1%22%7D%2C%7B%22adapter%22%3A%22pppoe%22%7D%5D%7D%2C%7B%22api%22%3A%22SYNO.Core.Web.Security.HTTPCompression%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Web.Security.TLSProfile%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Hardware.SpectreMeltdown%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Storage.CGI.KMIP%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.Security.Firewall%22%2C%22method%22%3A%22get%22%2C%22version%22%3A1%7D%2C%7B%22api%22%3A%22SYNO.Core.User%22%2C%22method%22%3A%22list%22%2C%22version%22%3A1%2C%22type%22%3A%22local%22%2C%22additional%22%3A%5B%22expired%22%5D%7D%2C%7B%22api%22%3A%22SYNO.Core.System%22%2C%22method%22%3A%22info%22%2C%22version%22%3A3%7D%2C%7B%22api%22%3A%22SYNO.Core.QuickConnect%22%2C%22method%22%3A%22get%22%2C%22version%22%3A2%7D%2C%7B%22api%22%3A%22SYNO.Core.Upgrade.Server%22%2C%22method%22%3A%22check%22%2C%22version%22%3A3%2C%22user_reading%22%3Atrue%2C%22need_auto_smallupdate%22%3Atrue%2C%22need_promotion%22%3Atrue%7D%5D")
+	payload := strings.NewReader(buildCompoundPayload())
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -73,6 +73,7 @@ func getFirewallData(response SynologyResponse) (FirewallData, error) {
 	endpoint := "SYNO.Core.Security.Firewall"
 	for _, result := range response.Data.Result {
 		if endpoint == result.API {
+			fmt.Println(result)
 			jsonBytes, err := json.Marshal(result.Data)
 			if err != nil {
 				return FirewallData{}, err
