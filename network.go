@@ -30,7 +30,7 @@ func checkPort(host string, portInfo PortInfo, ch chan<- PortStatus, wg *sync.Wa
 	ch <- portStatus
 }
 
-func scanPorts(host string) []PortStatus {
+func scanPorts(host string) ([]PortStatus, []Finding) {
 	start := time.Now()
 
 	var wg sync.WaitGroup
@@ -42,6 +42,8 @@ func scanPorts(host string) []PortStatus {
 	ports = append(ports, OptionalPorts...)
 
 	var results []PortStatus
+	var findings []Finding
+
 	go func() {
 		wg.Wait()
 		close(ch)
@@ -54,12 +56,33 @@ func scanPorts(host string) []PortStatus {
 
 	for portStatus := range ch {
 		results = append(results, portStatus)
+
+		if portStatus.IsOpen {
+			switch portStatus.Port {
+			case 22:
+				findings = append(findings, SecurityFindings["SSH_DEFAULT_PORT"])
+			case 23:
+				findings = append(findings, SecurityFindings["TELNET_ENABLED"])
+			case 21:
+				findings = append(findings, SecurityFindings["FTP_ENABLED"])
+			case 445:
+				findings = append(findings, SecurityFindings["SMB_EXPOSED"])
+			case 3389:
+				findings = append(findings, SecurityFindings["RDP_EXPOSED"])
+			case 5000:
+				findings = append(findings, SecurityFindings["DSM_HTTP_EXPOSED"])
+			case 137, 138, 139:
+				findings = append(findings, SecurityFindings["NETBIOS_EXPOSED"])
+			case 111:
+				findings = append(findings, SecurityFindings["RPC_EXPOSED"])
+			}
+		}
 	}
 
 	duration := time.Since(start)
 	fmt.Printf("Port scan completed in %v\n", duration)
 
-	return results
+	return results, findings
 }
 
 func displayPortResults(results []PortStatus) {

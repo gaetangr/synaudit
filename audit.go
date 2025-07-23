@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -71,13 +72,21 @@ func generateReport(response SynologyResponse) (*SecurityReport, error) {
 			}
 			return checkFirewallStatus(data), nil
 		},
-
 		"opt": func() ([]Finding, error) {
 			data, err := getOptData(response)
 			if err != nil {
 				return nil, err
 			}
 			return checkOptStatus(data), nil
+		},
+		"network": func() ([]Finding, error) {
+			url := os.Getenv("SYNOLOGY_HOST")
+			host, err := extractHost(url)
+			if err != nil {
+				return nil, err
+			}
+			_, networkFindings := scanPorts(host)
+			return networkFindings, nil
 		},
 	}
 

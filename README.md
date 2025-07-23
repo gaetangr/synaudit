@@ -1,5 +1,7 @@
 # Synaudit
 
+[![Synaudit Go CI/CD](https://github.com/gaetangr/synaudit/actions/workflows/go.yml/badge.svg)](https://github.com/gaetangr/synaudit/actions/workflows/go.yml)
+
 🔐 A fast and user-friendly security auditing tool for Synology NAS systems built in Go.
 
 ## 🎯 Why Synaudit?

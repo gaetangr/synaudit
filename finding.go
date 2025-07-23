@@ -73,6 +73,31 @@ var SecurityFindings = map[string]Finding{
 		Description: "SMB1 is outdated and vulnerable to exploits like WannaCry",
 		Remediation: "Disable SMB1 in Control Panel > File Services > SMB > Advanced",
 	},
+	"SMB_EXPOSED": {
+		Title:       "SMB service exposed",
+		Description: "SMB file sharing is accessible and may lack proper authentication",
+		Remediation: "Ensure SMB has strong authentication and restrict access to trusted networks",
+	},
+	"RDP_EXPOSED": {
+		Title:       "RDP service exposed",
+		Description: "Remote Desktop Protocol is accessible and frequently targeted by attackers",
+		Remediation: "Avoid exposing RDP to the internet, use VPN for remote access",
+	},
+	"DSM_HTTP_EXPOSED": {
+		Title:       "DSM HTTP service exposed",
+		Description: "Unencrypted DSM access allows credentials to be intercepted",
+		Remediation: "Disable HTTP access and use HTTPS (port 5001) only",
+	},
+	"NETBIOS_EXPOSED": {
+		Title:       "NetBIOS service exposed",
+		Description: "Legacy Windows networking protocol with known security risks",
+		Remediation: "Disable NetBIOS services if not required for legacy Windows compatibility",
+	},
+	"RPC_EXPOSED": {
+		Title:       "RPC service exposed",
+		Description: "Remote Procedure Call service is often exploited by attackers",
+		Remediation: "Disable RPC service if not required or restrict to trusted networks",
+	},
 	"NFS_EXPOSED": {
 		Title:       "NFS service is exposed",
 		Description: "NFS shares might be accessible without proper authentication",
