@@ -1,3 +1,3 @@
 module github.com/gaetangr/synaudit
 
-go 1.24.5
+go 1.24
