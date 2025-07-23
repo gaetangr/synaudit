@@ -47,77 +47,37 @@ func fetchSynologyData(url string) (*SynologyResponse, error) {
 	return &response, nil
 }
 
-func getUserData(response SynologyResponse) (UserListData, error) {
-	endpoint := "SYNO.Core.User"
-	var userData UserListData
+func getData[T any](endpoint string, response SynologyResponse) (T, error) {
+	var data T
 	for _, result := range response.Data.Result {
 		if !response.Success {
-			return UserListData{}, fmt.Errorf("API %s failed ",
-				endpoint)
+			return data, fmt.Errorf("API %s failed", endpoint)
 		}
 		if result.API == endpoint {
-
 			jsonBytes, err := json.Marshal(result.Data)
 			if err != nil {
-				return UserListData{}, err
+				return data, err
 			}
 
-			err = json.Unmarshal(jsonBytes, &userData)
+			err = json.Unmarshal(jsonBytes, &data)
 			if err != nil {
-				return UserListData{}, err
+				return data, err
 			}
-			return userData, nil
+			return data, nil
 		}
 	}
-	return UserListData{}, fmt.Errorf("API %s not found", endpoint)
+	return data, fmt.Errorf("API %s not found", endpoint)
+}
+
+func getUserData(response SynologyResponse) (UserListData, error) {
+	return getData[UserListData]("SYNO.Core.User", response)
+
 }
 
 func getFirewallData(response SynologyResponse) (FirewallData, error) {
-	endpoint := "SYNO.Core.Security.Firewall"
-	var firewallData FirewallData
-	for _, result := range response.Data.Result {
-		if endpoint == result.API {
-			if !response.Success {
-				return FirewallData{}, fmt.Errorf("API %s failed ",
-					endpoint)
-			}
-			jsonBytes, err := json.Marshal(result.Data)
-			if err != nil {
-				return FirewallData{}, err
-			}
-
-			err = json.Unmarshal(jsonBytes, &firewallData)
-			if err != nil {
-				return FirewallData{}, err
-			}
-			return firewallData, nil
-		}
-
-	}
-	return FirewallData{}, fmt.Errorf("not found")
+	return getData[FirewallData]("SYNO.Core.Security.Firewall", response)
 }
 
 func getOptData(response SynologyResponse) (EnforcePolicyOptData, error) {
-	endpoint := "SYNO.Core.OTP.EnforcePolicy"
-	var optData EnforcePolicyOptData
-	for _, result := range response.Data.Result {
-		if endpoint == result.API {
-			if !response.Success {
-				return EnforcePolicyOptData{}, fmt.Errorf("API %s failed ",
-					endpoint)
-			}
-			jsonBytes, err := json.Marshal(result.Data)
-			if err != nil {
-				return EnforcePolicyOptData{}, err
-			}
-
-			err = json.Unmarshal(jsonBytes, &optData)
-			if err != nil {
-				return EnforcePolicyOptData{}, err
-			}
-			return optData, nil
-		}
-
-	}
-	return EnforcePolicyOptData{}, fmt.Errorf("not found")
+	return getData[EnforcePolicyOptData]("SYNO.Core.OTP.EnforcePolicy", response)
 }
