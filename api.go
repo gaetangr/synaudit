@@ -71,7 +71,6 @@ func getData[T any](endpoint string, response SynologyResponse) (T, error) {
 
 func getUserData(response SynologyResponse) (UserListData, error) {
 	return getData[UserListData]("SYNO.Core.User", response)
-
 }
 
 func getFirewallData(response SynologyResponse) (FirewallData, error) {
@@ -80,4 +79,28 @@ func getFirewallData(response SynologyResponse) (FirewallData, error) {
 
 func getOptData(response SynologyResponse) (EnforcePolicyOptData, error) {
 	return getData[EnforcePolicyOptData]("SYNO.Core.OTP.EnforcePolicy", response)
+}
+
+func getTerminalData(response SynologyResponse) (TerminalData, error) {
+	return getData[TerminalData]("SYNO.Core.Terminal", response)
+}
+
+func getFTPData(response SynologyResponse) (FTPData, error) {
+	return getData[FTPData]("SYNO.Core.FileServ.FTP", response)
+}
+
+func getPasswordPolicyData(response SynologyResponse) (PasswordPolicyData, error) {
+	return getData[PasswordPolicyData]("SYNO.Core.User.PasswordPolicy", response)
+}
+
+func getPackageData(response SynologyResponse) (PackageData, error) {
+	return getData[PackageData]("SYNO.Core.Package", response)
+}
+
+func getQuickConnectData(response SynologyResponse) (QuickConnectData, error) {
+	return getData[QuickConnectData]("SYNO.Core.QuickConnect", response)
+}
+
+func getAutoBlockData(response SynologyResponse) (AutoBlockData, error) {
+	return getData[AutoBlockData]("SYNO.Core.Security.AutoBlock", response)
 }

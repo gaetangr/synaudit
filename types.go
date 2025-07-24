@@ -34,10 +34,62 @@ type FirewallData struct {
 	Enable_firewall bool `json:"enable_firewall"`
 }
 
+type TerminalData struct {
+	EnableSSH    bool `json:"enable_ssh"`
+	EnableTelnet bool `json:"enable_telnet"`
+	SSHPort      int  `json:"ssh_port"`
+	TelnetPort   int  `json:"telnet_port"`
+}
+
+type AutoBlockData struct {
+	Attemps     int  `json:"attempts"`
+	Enable      bool `json:"enable"`
+	Expire_day  int  `json:"expire_day"`
+	Within_mins int  `json:"within_mins"`
+}
+
+type PasswordPolicyData struct {
+	EnableResetPasswdByEmail bool `json:"enable_reset_passwd_by_email"`
+	PasswordMustChange       bool `json:"password_must_change"`
+	StrongPassword           struct {
+		ExcludeCommonPassword bool `json:"exclude_common_password"`
+		ExcludeHistory        bool `json:"exclude_history"`
+		ExcludeUsername       bool `json:"exclude_username"`
+		HistoryNum            int  `json:"history_num"`
+		IncludedNumericChar   bool `json:"included_numeric_char"`
+		IncludedSpecialChar   bool `json:"included_special_char"`
+		MinLength             int  `json:"min_length"`
+		MinLengthEnable       bool `json:"min_length_enable"`
+		MixedCase             bool `json:"mixed_case"`
+	} `json:"strong_password"`
+}
+
+type PackageData struct {
+	Packages []struct {
+		ID         string `json:"id"`
+		Name       string `json:"name"`
+		Version    string `json:"version"`
+		Timestamp  int64  `json:"timestamp"`
+		Additional struct {
+			InstallType string `json:"install_type"`
+		} `json:"additional"`
+	} `json:"packages"`
+}
+
+type QuickConnectData struct {
+	Enabled bool `json:"enabled"`
+}
 type Finding struct {
 	Title       string
 	Description string
 	Remediation string
+}
+
+type FTPData struct {
+	Enable      bool `json:"enable"`
+	EnableTLS   bool `json:"enable_tls"`
+	Port        int  `json:"port"`
+	PassiveMode bool `json:"passive_mode"`
 }
 
 type SecurityReport struct {

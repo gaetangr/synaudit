@@ -2,9 +2,9 @@
 
 [![Synaudit Go CI/CD](https://github.com/gaetangr/synaudit/actions/workflows/go.yml/badge.svg)](https://github.com/gaetangr/synaudit/actions/workflows/go.yml)
 
-🔐 A fast and user-friendly security auditing tool for Synology NAS systems built in Go.
+A fast and user-friendly security auditing tool for Synology NAS systems built in Go.
 
-## 🎯 Why Synaudit?
+## Why Synaudit?
 
 While I love my Synology NAS, the DSM interface can be slow and cumbersome for quick security audits. I found myself constantly jumping between multiple services and applications just to get a comprehensive understanding of my system's health and security status.
 
@@ -18,17 +18,56 @@ Although Synology provides some built-in tools, none offer the speed or comprehe
 - **No dependencies**: Single binary, no installation required
 - **Scalable**: The code architecture is easy to expand for futur checks
 
-## 🚀 Features
+## Features
 
 ### Current Security Checks
-- **Admin Account Status**: Verifies if the admin account is properly disabled
-- **User Management**: Lists and analyzes local user accounts
+
+#### User & Authentication
+- **Admin Account Status**: Verifies if the default admin account is properly disabled
+- **2FA Enforcement**: Checks if two-factor authentication is enforced for admin accounts
+- **Password Policy**: Comprehensive analysis of password strength requirements
+  - Minimum length enforcement
+  - Mixed case requirements
+  - Numeric character requirements
+  - Special character requirements
+  - Username exclusion in passwords
+  - Common password blocking
+  - Password history enforcement
+  - Password expiration policies
+
+#### Network & Firewall
+- **Firewall Status**: Verifies if the system firewall is enabled
+- **Port Security**: Scans for open ports and identifies security risks
+  - SSH on default port (22)
+  - Telnet service detection (critical risk)
+  - FTP service detection (unencrypted)
+  - SMB/NetBIOS exposure
+  - RDP exposure
+  - DSM HTTP vs HTTPS usage
+  - RPC service exposure
+
+#### Remote Access & Services
+- **QuickConnect**: Detects if QuickConnect service is enabled (security risk)
+- **Terminal Services**: Checks SSH and Telnet configuration
+  - SSH default port usage
+  - Telnet enablement (critical security issue)
+- **FTP Security**: Analyzes FTP service configuration
+  - Unencrypted FTP detection
+  - TLS/SSL encryption status
+- **Auto-Block Policy**: Verifies brute force protection settings
+
+#### Package Security
+- **Installed Packages Analysis**: Reviews installed packages for security risks
+  - Development tools in production (Node.js, PHP, Perl)
+  - Obsolete packages (Python2, old PHP versions)
+  - High-risk packages (ContainerManager, DownloadStation)
+  - Unnecessary services identification
 
 ### Configuration
 - **Environment Variables**: Uses `.env` file for easy configuration
-- **Secure Connection**: Supports HTTPS with custom certificates
+- **Comprehensive API Coverage**: Utilizes 40+ Synology API endpoints
 
-## ⚡ Quick Start
+## Quick Start
 
 ### 1. Setup Configuration
 Create a `.env` file in the project directory:
@@ -53,24 +92,35 @@ go build .
 ```
 
 ### Current Features
-- ✅ ....
+- **Admin Account Security**: Default admin account status verification
+- **2FA Enforcement**: Two-factor authentication policy checks
+- **Password Policy**: Comprehensive password strength analysis
+- **Firewall Status**: System firewall configuration verification
+- **Network Security**: Port scanning and service exposure detection
+- **Terminal Services**: SSH/Telnet security configuration
+- **FTP Security**: File transfer protocol security analysis
+- **QuickConnect**: Remote access service security assessment
+- **Package Security**: Installed package risk analysis
+- **Auto-Block**: Brute force protection verification
+- **Comprehensive API**: 40+ Synology API endpoints coverage
 
 ### Planned Features
-- 🔜 Monitor open ports (SSH, Telnet, Mail, etc.)
-- 🔜 Check firewall rules and configuration
-- 🔜 Monitor CPU and system resource usage
-- 🔜 Verify SSL/TLS configurations
-- 🔜 Check for available DSM updates
-- 🔜 Detect brute force vulnerabilities
-- 🔜 Export reports (JSON, HTML)
+- **Certificate Management**: SSL/TLS certificate validation
+- **Update Management**: DSM and package update status
+- **Backup Verification**: Backup task configuration analysis
+- **Share Security**: Shared folder permission auditing
+- **Log Analysis**: Security event log monitoring
+- **VPN Configuration**: VPN service security assessment
+- **Export Reports**: JSON, HTML, and PDF report generation
+- **Scheduled Audits**: Automated recurring security checks
 
-## 📋 Requirements
+## Requirements
 
 - Synology NAS with DSM 6.0 or higher
 - Admin privileges on your Synology NAS
 - Go 1.19+ (for building from source)
 
-## 🛠️ Installation
+## Installation
 
 ### Option 1: Download Pre-built Binary
 ```bash
@@ -86,15 +136,32 @@ cd synaudit
 go build -o synaudit .
 ```
 
-## 🔧 Usage
+## Usage
 
 ### Basic Usage
 ```bash
-# Run with default settings
-./synaudit # WORK IN PROGRESS, NOT YET IMPLEMENTED
+# Run security audit
+./synaudit
+
+# Example output:
+🔍 SECURITY AUDIT REPORT
+📅 Checked at: 2025-07-24 15:30:45
+📊 Total issues: 3
+
+[1] SSH running on default port
+    ⚠️  SSH on port 22 is heavily targeted by automated attacks
+    💡 Change SSH port to a high random port (e.g., 22000-65000)
+
+[2] Password minimum length too short
+    ⚠️  Current minimum password length is 8 characters, should be at least 10
+    💡 Increase minimum password length to 10+ characters
+
+[3] QuickConnect is enabled
+    ⚠️  QuickConnect exposes your NAS to the internet through Synology's relay servers
+    💡 Disable QuickConnect and use VPN for remote access instead
 ```
 
-## 🔒 Security & Privacy
+## Security & Privacy
 
 **Your data is safe:**
 - All network calls are made locally to your NAS IP
@@ -104,7 +171,7 @@ go build -o synaudit .
 
 **Note**: To perform security checks, Synaudit requires a user with admin privileges on your Synology NAS.
 
-## 🏗️ Technical Details
+## Technical Details
 
 ### The Synology API
 
@@ -117,14 +184,19 @@ Through reverse engineering the DSM interface, I discovered that using the compo
 ### Project Structure
 ```
 synaudit/
-├── main.go          # Entry point
-├── audit.go         # Security audit logic
-├── synology.go      # API communication
-├── types.go         # Data structures
-└── README.md        # This file
+├── main.go              # Entry point and main execution flow
+├── audit.go             # Security audit logic and finding generation
+├── api.go               # Synology API communication and data fetching
+├── api_endpoints.go     # API endpoint definitions and payload building
+├── network.go           # Network scanning and port analysis
+├── types.go             # Data structures and type definitions
+├── finding.go           # Security findings database and descriptions
+├── utils.go             # Utility functions and helpers
+├── .env.example         # Environment configuration template
+└── README.md            # This file
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -143,7 +215,7 @@ go test ./...
 # Build
 go build -o synaudit .
 ```
-## ⚠️ Disclaimer
+## Disclaimer
 
 This tool is provided as-is for security auditing of your own Synology NAS systems. Always ensure you have proper authorization before running security audits. The authors are not responsible for any misuse or damage caused by this tool.
 
