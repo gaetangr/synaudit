@@ -10,13 +10,41 @@ While I love my Synology NAS, the DSM interface can be slow and cumbersome for q
 
 Although Synology provides some built-in tools, none offer the speed or comprehensive bundling of all the security checks I needed. That's why I created Synaudit.
 
+## Performance Comparison
+
+**Synaudit vs DSM Interface:**
+- **Speed**: Complete audit in **under 5 seconds** vs 5-10+ minutes manually checking DSM
+- **Comprehensiveness**: 40+ automated checks vs scattered manual verification
+- **Usability**: Single command vs navigating multiple DSM menus and services
+- **Reliability**: Consistent results vs potential human oversight
+- **Actionable**: Clear recommendations vs generic status information
+
+The DSM graphical interface, while functional, becomes inefficient when you need regular security assessments. Synaudit consolidates all critical security checks into one fast, automated tool.
+
+## Community-Driven Development
+
+Synaudit is built **by the community, for the community**. As a Synology user myself, I understand the real-world security challenges we face. This project thrives on contributions from:
+
+- **Synology Experts**: System administrators and security professionals
+- **Home Users**: Enthusiasts who want to secure their personal NAS
+- **Developers**: Contributors improving code quality and adding features
+- **Security Researchers**: Experts identifying new vulnerabilities and checks
+
+**How You Can Contribute:**
+- **Suggest New Security Checks**: Share security best practices from your experience
+- **Report Issues**: Help identify bugs or compatibility problems
+- **Improve Recommendations**: Enhance our security advice and solutions
+- **Documentation**: Help make Synaudit more accessible to all users
+- **Code Contributions**: Add features, optimize performance, or fix bugs
+
+
 ### Key Benefits:
-- **Fast**: Built with Go for lightning-fast performance
+- **Lightning Fast**: Complete security audit in under 7 seconds vs minutes with DSM interface
 - **User-friendly**: Designed for both technical and non-technical users
-- **Comprehensive**: All security checks in one place
-- **Community-driven**: Implements best practices discussed in the Synology community
+- **Comprehensive**: All security checks in one place with actionable recommendations
+- **Community-driven**: Built by and for the Synology community
 - **No dependencies**: Single binary, no installation required
-- **Scalable**: The code architecture is easy to expand for futur checks
+- **Scalable**: The code architecture is easy to expand for future checks
 
 ## Features
 
@@ -144,21 +172,21 @@ go build -o synaudit .
 ./synaudit
 
 # Example output:
-🔍 SECURITY AUDIT REPORT
-📅 Checked at: 2025-07-24 15:30:45
-📊 Total issues: 3
+SECURITY AUDIT REPORT
+Checked at: 2025-07-24 15:30:45
+Total issues: 3
 
 [1] SSH running on default port
-    ⚠️  SSH on port 22 is heavily targeted by automated attacks
-    💡 Change SSH port to a high random port (e.g., 22000-65000)
+    WARNING: SSH on port 22 is heavily targeted by automated attacks
+    RECOMMENDATION: Change SSH port to a high random port (e.g., 22000-65000)
 
 [2] Password minimum length too short
-    ⚠️  Current minimum password length is 8 characters, should be at least 10
-    💡 Increase minimum password length to 10+ characters
+    WARNING: Current minimum password length is 8 characters, should be at least 10
+    RECOMMENDATION: Increase minimum password length to 10+ characters
 
 [3] QuickConnect is enabled
-    ⚠️  QuickConnect exposes your NAS to the internet through Synology's relay servers
-    💡 Disable QuickConnect and use VPN for remote access instead
+    WARNING: QuickConnect exposes your NAS to the internet through Synology's relay servers
+    RECOMMENDATION: Disable QuickConnect and use VPN for remote access instead
 ```
 
 ## Security & Privacy
@@ -198,7 +226,27 @@ synaudit/
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Synaudit is a **community-driven project** that welcomes contributions from Synology users, security experts, and developers of all skill levels.
+
+### Ways to Contribute
+
+**Security Expertise**
+- Suggest new security checks based on real-world threats
+- Improve existing check logic and detection accuracy
+- Share Synology-specific security best practices
+- Help identify false positives and edge cases
+
+**Development**
+- Add new features and security checks
+- Optimize performance and code quality
+- Improve error handling and user experience
+- Enhance API coverage and data parsing
+
+**Documentation & Community**
+- Improve documentation and user guides
+- Create tutorials and best practice guides
+- Help with translations and accessibility
+- Assist other users in discussions and issues
 
 ### Development Setup
 ```bash
@@ -215,6 +263,15 @@ go test ./...
 # Build
 go build -o synaudit .
 ```
+
+### Contribution Guidelines
+1. **Check existing issues** before creating new ones
+2. **Follow Go conventions** and maintain code quality
+3. **Include tests** for new security checks
+4. **Update documentation** for new features
+5. **Test thoroughly** on different DSM versions when possible
+
+**Together, we're making Synology NAS security accessible to everyone!**
 ## Disclaimer
 
 This tool is provided as-is for security auditing of your own Synology NAS systems. Always ensure you have proper authorization before running security audits. The authors are not responsible for any misuse or damage caused by this tool.
