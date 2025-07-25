@@ -1,8 +1,7 @@
-package main
+package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 )
@@ -10,8 +9,6 @@ import (
 func IsAdminDisabled(userListData UserListData) (bool, error) {
 	for _, user := range userListData.Users {
 		if user.Name == AdminUsername {
-			fmt.Printf("DEBUG: Admin user found - expired: %s\n", user.Expired)
-
 			if user.Expired == UserStatusExpired {
 				return true, nil
 			}
@@ -21,7 +18,7 @@ func IsAdminDisabled(userListData UserListData) (bool, error) {
 	return false, fmt.Errorf("admin user not found")
 }
 
-func checkAdminStatus(userData UserListData) []Finding {
+func CheckAdminStatus(userData UserListData) []Finding {
 	var findings []Finding
 
 	disabled, _ := IsAdminDisabled(userData)
@@ -33,7 +30,7 @@ func checkAdminStatus(userData UserListData) []Finding {
 	return findings
 }
 
-func checkFirewallStatus(firewallData FirewallData) []Finding {
+func CheckFirewallStatus(firewallData FirewallData) []Finding {
 	var findings []Finding
 
 	if !firewallData.Enable_firewall {
@@ -42,7 +39,7 @@ func checkFirewallStatus(firewallData FirewallData) []Finding {
 	return []Finding{}
 }
 
-func checkOptStatus(optData EnforcePolicyOptData) []Finding {
+func CheckOptStatus(optData EnforcePolicyOptData) []Finding {
 	var findings []Finding
 
 	if optData.OtpEnforceOption != EnforcePolicyAdmin && optData.OtpEnforceOption != EnforcePolicyUser {
@@ -51,7 +48,7 @@ func checkOptStatus(optData EnforcePolicyOptData) []Finding {
 	return []Finding{}
 }
 
-func checkTerminalSecurity(terminalData TerminalData) []Finding {
+func CheckTerminalSecurity(terminalData TerminalData) []Finding {
 	var findings []Finding
 
 	if terminalData.EnableTelnet {
@@ -65,7 +62,7 @@ func checkTerminalSecurity(terminalData TerminalData) []Finding {
 	return findings
 }
 
-func checkFTPSecurity(ftpData FTPData) []Finding {
+func CheckFtpSecurity(ftpData FTPData) []Finding {
 	var findings []Finding
 
 	if ftpData.Enable && !ftpData.EnableTLS {
@@ -75,7 +72,7 @@ func checkFTPSecurity(ftpData FTPData) []Finding {
 	return findings
 }
 
-func checkPasswordPolicy(passwordData PasswordPolicyData) []Finding {
+func CheckPasswordPolicy(passwordData PasswordPolicyData) []Finding {
 	var findings []Finding
 
 	if !passwordData.StrongPassword.MinLengthEnable {
@@ -157,7 +154,7 @@ func checkPasswordPolicy(passwordData PasswordPolicyData) []Finding {
 	return findings
 }
 
-func checkPackageSecurity(packageData PackageData) []Finding {
+func CheckPackageSecurity(packageData PackageData) []Finding {
 	var findings []Finding
 
 	riskyPackages := map[string]string{
@@ -219,7 +216,7 @@ func checkPackageSecurity(packageData PackageData) []Finding {
 	return findings
 }
 
-func checkQuickConnectSecurity(quickConnectData QuickConnectData) []Finding {
+func CheckQuickConnectSecurity(quickConnectData QuickConnectData) []Finding {
 	var findings []Finding
 
 	if quickConnectData.Enabled {
@@ -229,7 +226,7 @@ func checkQuickConnectSecurity(quickConnectData QuickConnectData) []Finding {
 	return findings
 }
 
-func checkAutoBlockPolicy(autoBlockData AutoBlockData) []Finding {
+func CheckAutoBlockPolicy(autoBlockData AutoBlockData) []Finding {
 	var findings []Finding
 	if !autoBlockData.Enable {
 		findings = append(findings, SecurityFindings["AUTO_BLOCK_DISABLED"])
@@ -245,83 +242,73 @@ func generateReport(response SynologyResponse) (*SecurityReport, error) {
 
 	checks := map[string]func() ([]Finding, error){
 		"users": func() ([]Finding, error) {
-			data, err := getUserData(response)
+			data, err := GetUserData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkAdminStatus(data), nil
+			return CheckAdminStatus(data), nil
 		},
 		"firewall": func() ([]Finding, error) {
-			data, err := getFirewallData(response)
+			data, err := GetFirewallData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkFirewallStatus(data), nil
+			return CheckFirewallStatus(data), nil
 		},
 		"opt": func() ([]Finding, error) {
 			data, err := getOptData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkOptStatus(data), nil
-		},
-		"network": func() ([]Finding, error) {
-			url := os.Getenv("SYNOLOGY_HOST")
-			host, err := extractHost(url)
-			if err != nil {
-				return nil, err
-			}
-			_, networkFindings := scanPorts(host)
-			return networkFindings, nil
+			return CheckOptStatus(data), nil
 		},
 		"password_policy": func() ([]Finding, error) {
 			data, err := getPasswordPolicyData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkPasswordPolicy(data), nil
+			return CheckPasswordPolicy(data), nil
 		},
 		"packages": func() ([]Finding, error) {
 			data, err := getPackageData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkPackageSecurity(data), nil
+			return CheckPackageSecurity(data), nil
 		},
 		"terminal": func() ([]Finding, error) {
 			data, err := getTerminalData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkTerminalSecurity(data), nil
+			return CheckTerminalSecurity(data), nil
 		},
 		"ftp": func() ([]Finding, error) {
 			data, err := getFTPData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkFTPSecurity(data), nil
+			return CheckFtpSecurity(data), nil
 		},
 		"quickconnect": func() ([]Finding, error) {
 			data, err := getQuickConnectData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkQuickConnectSecurity(data), nil
+			return CheckQuickConnectSecurity(data), nil
 		},
 		"autoblock": func() ([]Finding, error) {
 			data, err := getAutoBlockData(response)
 			if err != nil {
 				return nil, err
 			}
-			return checkAutoBlockPolicy(data), nil
+			return CheckAutoBlockPolicy(data), nil
 		},
 	}
 
 	for name, check := range checks {
 		findings, err := check()
 		if err != nil {
-
 			fmt.Printf("Warning: %s check failed: %v\n", name, err)
 			continue
 		}
@@ -332,22 +319,22 @@ func generateReport(response SynologyResponse) (*SecurityReport, error) {
 }
 
 func displayReport(report *SecurityReport) {
-	fmt.Println("\n🔍 SECURITY AUDIT REPORT")
-	fmt.Printf("📅 Checked at: %s\n", report.CheckedAt.Format("2006-01-02 15:04:05"))
-	fmt.Printf("📊 Total issues: %d\n", len(report.Findings))
+	fmt.Println("\nSECURITY AUDIT REPORT")
+	fmt.Printf("Checked at: %s\n", report.CheckedAt.Format("2006-01-02 15:04:05"))
+	fmt.Printf("Total issues: %d\n", len(report.Findings))
 
 	if len(report.Findings) == 0 {
-		fmt.Println("\n✅ No security issues found!")
+		fmt.Println("\nNo security issues found!")
 		return
 	}
 
-	fmt.Println("\n" + strings.Repeat("─", 80))
+	fmt.Println("\n" + strings.Repeat("-", 80))
 
 	for i, finding := range report.Findings {
 		fmt.Printf("\n[%d] %s\n", i+1, finding.Title)
-		fmt.Printf("    ⚠️  %s\n", finding.Description)
-		fmt.Printf("    💡 %s\n", finding.Remediation)
+		fmt.Printf("    %s\n", finding.Description)
+		fmt.Printf("    %s\n", finding.Remediation)
 	}
 
-	fmt.Println("\n" + strings.Repeat("─", 80))
+	fmt.Println("\n" + strings.Repeat("-", 80))
 }

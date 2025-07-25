@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"crypto/tls"
@@ -10,8 +10,15 @@ import (
 	"strings"
 )
 
-func fetchSynologyData(url string) (*SynologyResponse, error) {
-	payload := strings.NewReader(buildCompoundPayload())
+type SessionConfig struct {
+	SID  string `json:"sid"`
+	DID  string `json:"did"`
+	Host string `json:"host"`
+	User string `json:"user"`
+}
+
+func FetchSynologyData(url string) (*SynologyResponse, error) {
+	payload := strings.NewReader(BuildCompoundPayload())
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -47,6 +54,43 @@ func fetchSynologyData(url string) (*SynologyResponse, error) {
 	return &response, nil
 }
 
+func FetchSynologyDataWithSession(session *SessionConfig) (*SynologyResponse, error) {
+	payload := strings.NewReader(BuildCompoundPayload())
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	url := fmt.Sprintf("https://%s/webapi/entry.cgi", session.Host)
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Cookie", fmt.Sprintf("did=%s; id=%s", session.DID, session.SID))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading body: %w", err)
+	}
+
+	var response SynologyResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing JSON: %w", err)
+	}
+
+	return &response, nil
+}
+
 func getData[T any](endpoint string, response SynologyResponse) (T, error) {
 	var data T
 	for _, result := range response.Data.Result {
@@ -69,38 +113,38 @@ func getData[T any](endpoint string, response SynologyResponse) (T, error) {
 	return data, fmt.Errorf("API %s not found", endpoint)
 }
 
-func getUserData(response SynologyResponse) (UserListData, error) {
+func GetUserData(response SynologyResponse) (UserListData, error) {
 	return getData[UserListData]("SYNO.Core.User", response)
 }
 
-func getFirewallData(response SynologyResponse) (FirewallData, error) {
+func GetFirewallData(response SynologyResponse) (FirewallData, error) {
 	return getData[FirewallData]("SYNO.Core.Security.Firewall", response)
 }
 
-func getOptData(response SynologyResponse) (EnforcePolicyOptData, error) {
+func GetOptData(response SynologyResponse) (EnforcePolicyOptData, error) {
 	return getData[EnforcePolicyOptData]("SYNO.Core.OTP.EnforcePolicy", response)
 }
 
-func getTerminalData(response SynologyResponse) (TerminalData, error) {
+func GetTerminalData(response SynologyResponse) (TerminalData, error) {
 	return getData[TerminalData]("SYNO.Core.Terminal", response)
 }
 
-func getFTPData(response SynologyResponse) (FTPData, error) {
+func GetFTPData(response SynologyResponse) (FTPData, error) {
 	return getData[FTPData]("SYNO.Core.FileServ.FTP", response)
 }
 
-func getPasswordPolicyData(response SynologyResponse) (PasswordPolicyData, error) {
+func GetPasswordPolicyData(response SynologyResponse) (PasswordPolicyData, error) {
 	return getData[PasswordPolicyData]("SYNO.Core.User.PasswordPolicy", response)
 }
 
-func getPackageData(response SynologyResponse) (PackageData, error) {
+func GetPackageData(response SynologyResponse) (PackageData, error) {
 	return getData[PackageData]("SYNO.Core.Package", response)
 }
 
-func getQuickConnectData(response SynologyResponse) (QuickConnectData, error) {
+func GetQuickConnectData(response SynologyResponse) (QuickConnectData, error) {
 	return getData[QuickConnectData]("SYNO.Core.QuickConnect", response)
 }
 
-func getAutoBlockData(response SynologyResponse) (AutoBlockData, error) {
+func GetAutoBlockData(response SynologyResponse) (AutoBlockData, error) {
 	return getData[AutoBlockData]("SYNO.Core.Security.AutoBlock", response)
 }

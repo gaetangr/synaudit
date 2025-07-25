@@ -1,6 +1,8 @@
 # Synaudit
 
 [![Synaudit Go CI/CD](https://github.com/gaetangr/synaudit/actions/workflows/go.yml/badge.svg)](https://github.com/gaetangr/synaudit/actions/workflows/go.yml)
+[![AI Assisted](https://img.shields.io/badge/AI%20Assisted-Human%20Reviewed-blue)](./CONTRIBUTING.md#ai-assistance-policy)
+[![Go Version](https://img.shields.io/badge/Go-1.19+-blue.svg)](https://golang.org)
 
 A security auditing tool for Synology NAS systems written in Go.
 
@@ -48,20 +50,36 @@ go build -o synaudit .
 
 ## Usage
 
-1. Create a `.env` file:
+## Usage
+
+### Quick Start
+
+1. **Login to your NAS:**
 ```bash
-cp .env.example .env
+./synaudit login -u admin -H https://your-synology-ip:5001
 ```
 
-2. Add your Synology details:
-```env
-SYNOLOGY_HOST=https://your-synology-ip:port/webapi/entry.cgi
+2. **Run security audit:**
+```bash
+./synaudit audit
 ```
 
-3. Run the audit:
+3. **Logout when done:**
 ```bash
-./synaudit
+./synaudit logout
 ```
+
+### Commands
+
+- `login` - Authenticate with your Synology NAS
+- `audit` - Run comprehensive security audit  
+- `logout` - End session and clear credentials
+
+### Flags
+
+- `-u, --user` - Username (required for login)
+- `-H, --host` - NAS host URL (required for login)
+- `-h, --help` - Show help
 
 ### Example output
 ```
@@ -89,15 +107,35 @@ Synaudit uses the Synology Web API to gather system information. Since official 
 ### Project Structure
 ```
 synaudit/
-├── main.go              # Entry point
-├── audit.go             # Security audit logic
-├── api.go               # Synology API communication
-├── api_endpoints.go     # API endpoint definitions
-├── network.go           # Port scanning
-├── types.go             # Data structures
-├── finding.go           # Security findings database
-├── utils.go             # Utility functions
-└── .env.example         # Configuration template
+├── main.go                     # Entry point
+├── go.mod                      # Module dependencies  
+├── go.sum                      # Dependency checksums
+├── cmd/                        # CLI commands
+│   ├── root.go                 # Root command setup
+│   ├── login.go                # Login command
+│   ├── auth.go                 # Authentication functions
+│   ├── config.go               # Session management
+│   ├── audit.go                # Audit command
+│   ├── api.go                  # Legacy API functions
+│   ├── security.go             # Legacy security functions
+│   └── logout.go               # Logout command
+├── internal/                   # Private application code
+│   ├── api/                    # Synology API communication
+│   │   ├── client.go           # HTTP client
+│   │   ├── endpoints.go        # API endpoint definitions
+│   │   └── types.go            # API data structures
+│   ├── audit/                  # Security audit logic
+│   │   ├── findings.go         # Security findings definitions
+│   │   └── logic.go            # Audit check implementations
+│   └── network/                # Network scanning
+│       ├── scanner.go          # Port scanning functionality
+│       └── types.go            # Network-related types
+├── pkg/                        # Public utility packages
+│   └── utils/                  # Common utilities
+│       └── utils.go            # Helper functions
+├── tests/                      # Test files
+│   └── business_logic_test.go  # Business logic tests
+└── configs/                    # Configuration files
 ```
 
 ## Security Notes
@@ -118,12 +156,15 @@ Contributions are welcome. When submitting PRs:
 5. Test on different DSM versions if possible
 
 ### Development
+
+This project uses modern development practices including AI-assisted development for productivity:
+
 ```bash
 # Install dependencies
 go mod download
 
 # Run tests
-go test ./...
+go test ./tests/...
 
 # Build
 go build -o synaudit .
@@ -141,3 +182,13 @@ go build -o synaudit .
 ## Disclaimer
 
 This tool is for auditing your own Synology NAS systems only. Ensure you have proper authorization before running security audits. The authors are not responsible for misuse or damage.
+
+## AI Assistance Disclaimer
+
+This project was developed with AI assistance for code generation, unit testing, and refactoring. However, **every line of code has been reviewed, validated, and approved by human developers**. The AI was used as a productivity tool to:
+
+- Create unit tests
+- Assist with code refactoring and organization
+- Provide documentation improvements
+
+All security-critical logic, API implementations, and business decisions were made by human developers. The final codebase reflects human judgment, testing, and validation.

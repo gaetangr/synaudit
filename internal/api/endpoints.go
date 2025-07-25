@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -80,7 +80,7 @@ var SecurityAPIs = []APIEndpoint{
 	{API: "SYNO.Core.BandwidthControl.Protocol", Method: "list", Version: 1},
 }
 
-func buildCompoundPayload() string {
+func BuildCompoundPayload() string {
 	compoundJSON, _ := json.Marshal(SecurityAPIs)
 
 	params := url.Values{}

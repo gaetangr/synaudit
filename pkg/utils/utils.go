@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"bufio"
@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func loadEnv() error {
+func LoadEnv() error {
 	file, err := os.Open(".env")
 	if err != nil {
 		return err
@@ -33,13 +33,11 @@ func loadEnv() error {
 	return scanner.Err()
 }
 
-func extractHost(urlString string) (string, error) {
+func ExtractHost(urlString string) (string, error) {
 	parsedURL, err := url.Parse(urlString)
 	if err != nil {
-
 		fmt.Printf("❌ Error parsing URL: %v\n", err)
 		return "", err
 	}
 	return parsedURL.Hostname(), nil
-
 }
