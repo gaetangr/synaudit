@@ -1,14 +1,14 @@
 # Synaudit
 
 [![Synaudit Go CI/CD](https://github.com/gaetangr/synaudit/actions/workflows/go.yml/badge.svg)](https://github.com/gaetangr/synaudit/actions/workflows/go.yml)
-[![AI Assisted](https://img.shields.io/badge/AI%20Assisted-Human%20Reviewed-blue)](./CONTRIBUTING.md#ai-assistance-policy)
-[![Go Version](https://img.shields.io/badge/Go-1.19+-blue.svg)](https://golang.org)
+
 
 A security auditing tool for Synology NAS systems written in Go.
 
 ## Why Synaudit?
 
 While I love my Synology NAS, the DSM interface can be slow and cumbersome for quick security audits. I found myself constantly jumping between multiple services and applications just to get a comprehensive understanding of my system's health and security status.
+
 ## Features
 
 ### Security Checks
@@ -104,39 +104,6 @@ Total issues: 3
 
 Synaudit uses the Synology Web API to gather system information. Since official documentation is limited, many endpoints were discovered through reverse engineering the DSM interface. The tool uses compound requests with session cookies for efficient data collection.
 
-### Project Structure
-```
-synaudit/
-├── main.go                     # Entry point
-├── go.mod                      # Module dependencies  
-├── go.sum                      # Dependency checksums
-├── cmd/                        # CLI commands
-│   ├── root.go                 # Root command setup
-│   ├── login.go                # Login command
-│   ├── auth.go                 # Authentication functions
-│   ├── config.go               # Session management
-│   ├── audit.go                # Audit command
-│   ├── api.go                  # Legacy API functions
-│   ├── security.go             # Legacy security functions
-│   └── logout.go               # Logout command
-├── internal/                   # Private application code
-│   ├── api/                    # Synology API communication
-│   │   ├── client.go           # HTTP client
-│   │   ├── endpoints.go        # API endpoint definitions
-│   │   └── types.go            # API data structures
-│   ├── audit/                  # Security audit logic
-│   │   ├── findings.go         # Security findings definitions
-│   │   └── logic.go            # Audit check implementations
-│   └── network/                # Network scanning
-│       ├── scanner.go          # Port scanning functionality
-│       └── types.go            # Network-related types
-├── pkg/                        # Public utility packages
-│   └── utils/                  # Common utilities
-│       └── utils.go            # Helper functions
-├── tests/                      # Test files
-│   └── business_logic_test.go  # Business logic tests
-└── configs/                    # Configuration files
-```
 
 ## Security Notes
 
