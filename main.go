@@ -1,26 +1,11 @@
+/*
+Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+
+*/
 package main
 
-import (
-	"fmt"
-	"os"
-)
+import "github.com/gaetangr/synaudit/cmd"
 
 func main() {
-	loadEnv()
-
-	url := os.Getenv("SYNOLOGY_HOST")
-
-	response, err := fetchSynologyData(url)
-	if err != nil {
-		fmt.Printf("❌ Error: %v\n", err)
-		return
-	}
-	report, err := generateReport(*response)
-	if err != nil {
-		fmt.Printf("❌ Error generating report: %v\n", err)
-		return
-	}
-
-	displayReport(report)
-
+	cmd.Execute()
 }
