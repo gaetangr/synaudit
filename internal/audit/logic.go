@@ -160,9 +160,6 @@ func CheckPackageSecurity(packageData api.PackageData) []api.Finding {
 	var findings []api.Finding
 
 	riskyPackages := map[string]string{
-		"Node.js":          "Runtime environments can expose additional attack vectors",
-		"PHP":              "Web scripting languages increase attack surface",
-		"Perl":             "Scripting languages can be exploited if not properly secured",
 		"Python2":          "Python 2 is deprecated and no longer receives security updates",
 		"ContainerManager": "Docker containers can compromise system security if misconfigured",
 		"DownloadStation":  "Download services can be exploited to access unauthorized content",
@@ -327,22 +324,22 @@ func GenerateReport(response api.SynologyResponse) (*api.SecurityReport, error) 
 }
 
 func DisplayReport(report *api.SecurityReport) {
-	fmt.Println("\nSECURITY AUDIT REPORT")
-	fmt.Printf("Checked at: %s\n", report.CheckedAt.Format("2006-01-02 15:04:05"))
-	fmt.Printf("Total issues: %d\n", len(report.Findings))
+	fmt.Println("\n🔍 SECURITY AUDIT REPORT")
+	fmt.Printf("📅 Checked at: %s\n", report.CheckedAt.Format("2006-01-02 15:04:05"))
+	fmt.Printf("📊 Total issues: %d\n", len(report.Findings))
 
 	if len(report.Findings) == 0 {
-		fmt.Println("\nNo security issues found!")
+		fmt.Println("\n✅ No security issues found!")
 		return
 	}
 
-	fmt.Println("\n" + strings.Repeat("-", 80))
+	fmt.Println("\n" + strings.Repeat("─", 80))
 
 	for i, finding := range report.Findings {
 		fmt.Printf("\n[%d] %s\n", i+1, finding.Title)
-		fmt.Printf("    %s\n", finding.Description)
-		fmt.Printf("    %s\n", finding.Remediation)
+		fmt.Printf("    ⚠️  %s\n", finding.Description)
+		fmt.Printf("    💡 %s\n", finding.Remediation)
 	}
 
-	fmt.Println("\n" + strings.Repeat("-", 80))
+	fmt.Println("\n" + strings.Repeat("─", 80))
 }
