@@ -22,7 +22,6 @@ var auditCmd = &cobra.Command{
 
 		fmt.Printf("Running security audit on %s...\n", session.Host)
 
-		// Convert cmd SessionConfig to api SessionConfig
 		apiSession := &api.SessionConfig{
 			SID:  session.SID,
 			DID:  session.DID,
