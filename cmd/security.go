@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 func IsAdminDisabled(userListData UserListData) (bool, error) {
@@ -232,109 +231,4 @@ func CheckAutoBlockPolicy(autoBlockData AutoBlockData) []Finding {
 		findings = append(findings, SecurityFindings["AUTO_BLOCK_DISABLED"])
 	}
 	return findings
-}
-
-func generateReport(response SynologyResponse) (*SecurityReport, error) {
-	report := &SecurityReport{
-		CheckedAt: time.Now(),
-		Findings:  []Finding{},
-	}
-
-	checks := map[string]func() ([]Finding, error){
-		"users": func() ([]Finding, error) {
-			data, err := GetUserData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckAdminStatus(data), nil
-		},
-		"firewall": func() ([]Finding, error) {
-			data, err := GetFirewallData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckFirewallStatus(data), nil
-		},
-		"opt": func() ([]Finding, error) {
-			data, err := getOptData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckOptStatus(data), nil
-		},
-		"password_policy": func() ([]Finding, error) {
-			data, err := getPasswordPolicyData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckPasswordPolicy(data), nil
-		},
-		"packages": func() ([]Finding, error) {
-			data, err := getPackageData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckPackageSecurity(data), nil
-		},
-		"terminal": func() ([]Finding, error) {
-			data, err := getTerminalData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckTerminalSecurity(data), nil
-		},
-		"ftp": func() ([]Finding, error) {
-			data, err := getFTPData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckFtpSecurity(data), nil
-		},
-		"quickconnect": func() ([]Finding, error) {
-			data, err := getQuickConnectData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckQuickConnectSecurity(data), nil
-		},
-		"autoblock": func() ([]Finding, error) {
-			data, err := getAutoBlockData(response)
-			if err != nil {
-				return nil, err
-			}
-			return CheckAutoBlockPolicy(data), nil
-		},
-	}
-
-	for name, check := range checks {
-		findings, err := check()
-		if err != nil {
-			fmt.Printf("Warning: %s check failed: %v\n", name, err)
-			continue
-		}
-		report.Findings = append(report.Findings, findings...)
-	}
-
-	return report, nil
-}
-
-func displayReport(report *SecurityReport) {
-	fmt.Println("\nSECURITY AUDIT REPORT")
-	fmt.Printf("Checked at: %s\n", report.CheckedAt.Format("2006-01-02 15:04:05"))
-	fmt.Printf("Total issues: %d\n", len(report.Findings))
-
-	if len(report.Findings) == 0 {
-		fmt.Println("\nNo security issues found!")
-		return
-	}
-
-	fmt.Println("\n" + strings.Repeat("-", 80))
-
-	for i, finding := range report.Findings {
-		fmt.Printf("\n[%d] %s\n", i+1, finding.Title)
-		fmt.Printf("    %s\n", finding.Description)
-		fmt.Printf("    %s\n", finding.Remediation)
-	}
-
-	fmt.Println("\n" + strings.Repeat("-", 80))
 }

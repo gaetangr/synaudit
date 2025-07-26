@@ -1,13 +1,8 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
 	"time"
 )
 
@@ -122,72 +117,6 @@ type APIResult struct {
 	Data interface{} `json:"data"`
 }
 
-func fetchSynologyData(session *SessionConfig) (*SynologyResponse, error) {
-	payload := strings.NewReader(buildCompoundPayload())
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	url := fmt.Sprintf("https://%s/webapi/entry.cgi", session.Host)
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Cookie", fmt.Sprintf("did=%s; id=%s", session.DID, session.SID))
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("HTTP request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading body: %w", err)
-	}
-
-	var response SynologyResponse
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, fmt.Errorf("parsing JSON: %w", err)
-	}
-
-	return &response, nil
-}
-
-func buildCompoundPayload() string {
-	securityAPIs := []APIEndpoint{
-		{API: "SYNO.Core.Security.DSM", Method: "get", Version: 5},
-		{API: "SYNO.Core.Security.DSM.Embed", Method: "get", Version: 1},
-		{API: "SYNO.Core.OTP.EnforcePolicy", Method: "get", Version: 1},
-		{API: "SYNO.Core.Security.OTPForcedPolicy", Method: "get", Version: 1},
-		{API: "SYNO.Core.Security.Firewall.Profile", Method: "get", Version: 1},
-		{API: "SYNO.Core.Security.AutoBlock", Method: "get", Version: 1},
-		{API: "SYNO.Core.User", Method: "list", Version: 1, Type: "local", Additional: []string{"expired"}},
-		{API: "SYNO.Core.QuickConnect", Method: "get", Version: 2},
-		{API: "SYNO.Core.User.PasswordPolicy", Method: "get", Version: 1},
-		{API: "SYNO.Core.Terminal", Method: "get", Version: 3},
-		{API: "SYNO.Core.FileServ.FTP", Method: "get", Version: 3},
-		{API: "SYNO.Core.Package", Method: "list", Version: 2},
-	}
-
-	compoundJSON, _ := json.Marshal(securityAPIs)
-
-	params := url.Values{}
-	params.Set("api", "SYNO.Entry.Request")
-	params.Set("method", "request")
-	params.Set("version", "1")
-	params.Set("stop_when_error", "false")
-	params.Set("mode", "sequential")
-	params.Set("compound", string(compoundJSON))
-
-	return params.Encode()
-}
-
 type APIEndpoint struct {
 	API        string   `json:"api"`
 	Method     string   `json:"method"`
@@ -271,32 +200,4 @@ func GetUserData(response SynologyResponse) (UserListData, error) {
 
 func GetFirewallData(response SynologyResponse) (FirewallData, error) {
 	return getData[FirewallData]("SYNO.Core.Security.Firewall.Profile", response)
-}
-
-func getOptData(response SynologyResponse) (EnforcePolicyOptData, error) {
-	return getData[EnforcePolicyOptData]("SYNO.Core.Security.OTPForcedPolicy", response)
-}
-
-func getTerminalData(response SynologyResponse) (TerminalData, error) {
-	return getData[TerminalData]("SYNO.Core.Terminal", response)
-}
-
-func getFTPData(response SynologyResponse) (FTPData, error) {
-	return getData[FTPData]("SYNO.Core.FileServ.FTP", response)
-}
-
-func getPasswordPolicyData(response SynologyResponse) (PasswordPolicyData, error) {
-	return getData[PasswordPolicyData]("SYNO.Core.User.PasswordPolicy", response)
-}
-
-func getPackageData(response SynologyResponse) (PackageData, error) {
-	return getData[PackageData]("SYNO.Core.Package", response)
-}
-
-func getQuickConnectData(response SynologyResponse) (QuickConnectData, error) {
-	return getData[QuickConnectData]("SYNO.Core.QuickConnect", response)
-}
-
-func getAutoBlockData(response SynologyResponse) (AutoBlockData, error) {
-	return getData[AutoBlockData]("SYNO.Core.Security.AutoBlock", response)
 }
