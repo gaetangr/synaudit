@@ -160,20 +160,12 @@ func CheckPackageSecurity(packageData api.PackageData) []api.Finding {
 	var findings []api.Finding
 
 	riskyPackages := map[string]string{
-		"Python2":          "Python 2 is deprecated and no longer receives security updates",
+
 		"ContainerManager": "Docker containers can compromise system security if misconfigured",
 		"DownloadStation":  "Download services can be exploited to access unauthorized content",
 		"WebDAV":           "WebDAV service can expose file system to web attacks",
 		"VPN Server":       "VPN services need careful configuration to remain secure",
 		"RADIUS Server":    "Authentication servers are high-value targets",
-	}
-
-	obsoletePackages := []string{
-		"Python2", "PHP7.4",
-	}
-
-	developmentPackages := []string{
-		"Node.js", "PHP", "Perl",
 	}
 
 	for _, pkg := range packageData.Packages {
@@ -193,29 +185,6 @@ func CheckPackageSecurity(packageData api.PackageData) []api.Finding {
 			}
 		}
 
-		// Check for obsolete packages
-		for _, obsolete := range obsoletePackages {
-			if strings.Contains(pkg.ID, obsolete) || strings.Contains(pkg.Name, obsolete) {
-				findings = append(findings, api.Finding{
-					Title:       fmt.Sprintf("Obsolete package installed: %s", pkg.Name),
-					Description: fmt.Sprintf("%s is outdated and may have security vulnerabilities", pkg.Name),
-					Remediation: fmt.Sprintf("Remove %s and upgrade to a supported version if needed", pkg.Name),
-				})
-				break // Only report one obsolete finding per package
-			}
-		}
-
-		// Check for development packages (separate check, can coexist with risky)
-		for _, dev := range developmentPackages {
-			if strings.Contains(pkg.ID, dev) || strings.Contains(pkg.Name, dev) {
-				findings = append(findings, api.Finding{
-					Title:       fmt.Sprintf("Development package in production: %s", pkg.Name),
-					Description: fmt.Sprintf("%s should typically not be installed on production systems", pkg.Name),
-					Remediation: fmt.Sprintf("Remove %s if not required for production use", pkg.Name),
-				})
-				break // Only report one development finding per package
-			}
-		}
 	}
 
 	return findings

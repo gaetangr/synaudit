@@ -5,6 +5,8 @@
 
 A security auditing tool for Synology NAS systems written in Go.
 
+![Synaudit Example](assets/media/synaudit_cli_example.gif)
+
 ## Why Synaudit?
 
 While I love my Synology NAS, the DSM interface can be slow and cumbersome for quick security audits. I found myself constantly jumping between multiple services and applications just to get a comprehensive understanding of my system's health and security status.

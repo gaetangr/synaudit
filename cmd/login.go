@@ -49,8 +49,6 @@ var loginCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Login successful!\n")
-		fmt.Printf("Session ID: %s\n", loginData.SID)
-		fmt.Printf("Device ID: %s\n", loginData.DID)
 
 		if err := saveSessionToFile(loginData, host, user); err != nil {
 			fmt.Printf("Warning: Could not save session: %v\n", err)
