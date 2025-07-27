@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/gaetangr/synaudit/internal/api"
 )
 
 type LoginData struct {
@@ -67,7 +69,8 @@ func authenticateUser(host, username, password string) (*LoginData, error) {
 
 	if !loginResponse.Success {
 		if loginResponse.Error != nil {
-			return nil, fmt.Errorf("login failed with error code: %d", loginResponse.Error.Code)
+			description := api.GetSynologyErrorDescription(loginResponse.Error.Code)
+			return nil, fmt.Errorf("%s (code: %d)", description, loginResponse.Error.Code)
 		}
 		return nil, fmt.Errorf("login failed")
 	}

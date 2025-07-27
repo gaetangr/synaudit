@@ -51,6 +51,20 @@ func FetchSynologyData(url string) (*SynologyResponse, error) {
 		return nil, fmt.Errorf("parsing JSON: %w", err)
 	}
 
+	if response.Data.HasFail {
+		var failedAPIs []string
+		for _, result := range response.Data.Result {
+			if !result.Success && result.Error != nil {
+				description := GetSynologyErrorDescription(result.Error.Code)
+				failedAPIs = append(failedAPIs, fmt.Sprintf("%s: %s (code: %d)", result.API, description, result.Error.Code))
+			}
+		}
+		if len(failedAPIs) > 0 {
+			return nil, fmt.Errorf("synology API errors:\n%s", strings.Join(failedAPIs, "\n"))
+		}
+		return nil, fmt.Errorf("synology API returned errors - some endpoints failed")
+	}
+
 	return &response, nil
 }
 
@@ -86,6 +100,20 @@ func FetchSynologyDataWithSession(session *SessionConfig) (*SynologyResponse, er
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing JSON: %w", err)
+	}
+
+	if response.Data.HasFail {
+		var failedAPIs []string
+		for _, result := range response.Data.Result {
+			if !result.Success && result.Error != nil {
+				description := GetSynologyErrorDescription(result.Error.Code)
+				failedAPIs = append(failedAPIs, fmt.Sprintf("%s: %s (code: %d)", result.API, description, result.Error.Code))
+			}
+		}
+		if len(failedAPIs) > 0 {
+			return nil, fmt.Errorf("synology API errors:\n%s", strings.Join(failedAPIs, "\n"))
+		}
+		return nil, fmt.Errorf("synology API returned errors - some endpoints failed")
 	}
 
 	return &response, nil
