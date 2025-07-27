@@ -11,6 +11,14 @@ A security auditing tool for Synology NAS systems written in Go.
 
 While I love my Synology NAS, the DSM interface can be slow and cumbersome for quick security audits. I found myself constantly jumping between multiple services and applications just to get a comprehensive understanding of my system's health and security status.
 
+## Disclaimer 
+
+To perform security audits, you need admin credentials for your Synology NAS. We are using the official Synology authentication API to securely log in and perform checks, you can check the [API documentation](https://kb.synology.com/fr-fr/DG/DSM_Login_Web_API_Guide/2) for more details.
+
+All API calls are made locally to your NAS, you can check the [source code](https://github.com/gaetangr/synaudit/blob/main/cmd/auth.go) for more details. No external servers are contacted, and no telemetry or analytics are collected.
+
+Password is not stored in the tool nor your terminal history.
+
 ## Features
 
 ### Security Checks
@@ -36,6 +44,8 @@ While I love my Synology NAS, the DSM interface can be slow and cumbersome for q
 - Flags development tools in production
 - Detects obsolete software versions
 
+See [Planned Features](#planned-features) for future improvements and features.
+
 ## Installation
 
 ### Prerequisites
@@ -52,7 +62,7 @@ go build -o synaudit .
 
 ## Usage
 
-## Usage
+
 
 ### Quick Start
 
@@ -74,7 +84,7 @@ go build -o synaudit .
 ### Commands
 
 - `login` - Authenticate with your Synology NAS
-- `audit` - Run comprehensive security audit  
+- `audit` - Run local security audit 
 - `logout` - End session and clear credentials
 
 ### Flags
@@ -107,50 +117,14 @@ Total issues: 3
 Synaudit uses the Synology Web API to gather system information. Since official documentation is limited, many endpoints were discovered through reverse engineering the DSM interface. The tool uses compound requests with session cookies for efficient data collection.
 
 
-## Security Notes
-
-- All API calls are made locally to your NAS
-- No external servers are contacted
-- Admin credentials are required to perform security checks
-- No telemetry or analytics
-
-## Contributing
-
-Contributions are welcome. When submitting PRs:
-
-1. Check existing issues first
-2. Follow Go conventions
-3. Include tests for new checks
-4. Update documentation as needed
-5. Test on different DSM versions if possible
-
-### Development
-
-This project uses modern development practices including AI-assisted development for productivity:
-
-```bash
-# Install dependencies
-go mod download
-
-# Run tests
-go test ./tests/...
-
-# Build
-go build -o synaudit .
-```
-
 ## Planned Features
 
 - Certificate validation
-- Update status checking
-- Backup configuration analysis
 - Share permission auditing
 - Report export (JSON/HTML/PDF)
 - Scheduled audits
-
-## Disclaimer
-
-This tool is for auditing your own Synology NAS systems only. Ensure you have proper authorization before running security audits. The authors are not responsible for misuse or damage.
+- Known vulnerabilities (CVE) including recent Synology vulnerabilities such as CVE-2024-10443, CVE-2024-29241, CVE‑2025‑4679
+- And much more...
 
 ## AI Assistance Disclaimer
 
