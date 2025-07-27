@@ -1,4 +1,4 @@
-package cmd
+package auth
 
 import (
 	"encoding/json"
@@ -7,14 +7,6 @@ import (
 	"path/filepath"
 	"time"
 )
-
-type SessionConfig struct {
-	SID       string    `json:"sid"`
-	DID       string    `json:"did"`
-	Host      string    `json:"host"`
-	User      string    `json:"user"`
-	ExpiresAt time.Time `json:"expires_at"`
-}
 
 func getConfigPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
@@ -31,7 +23,7 @@ func getConfigPath() (string, error) {
 	return filepath.Join(configDir, "session.json"), nil
 }
 
-func saveSessionToFile(loginData *LoginData, host, user string) error {
+func SaveSessionToFile(loginData *LoginData, host, user string) error {
 	configPath, err := getConfigPath()
 	if err != nil {
 		return fmt.Errorf("getting config path: %w", err)
@@ -57,7 +49,7 @@ func saveSessionToFile(loginData *LoginData, host, user string) error {
 	return nil
 }
 
-func loadSessionFromFile() (*SessionConfig, error) {
+func LoadSessionFromFile() (*SessionConfig, error) {
 	configPath, err := getConfigPath()
 	if err != nil {
 		return nil, fmt.Errorf("getting config path: %w", err)
@@ -84,7 +76,7 @@ func loadSessionFromFile() (*SessionConfig, error) {
 	return &session, nil
 }
 
-func clearSessionFile() error {
+func ClearSessionFile() error {
 	configPath, err := getConfigPath()
 	if err != nil {
 		return err

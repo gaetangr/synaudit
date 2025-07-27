@@ -10,6 +10,13 @@ import (
 	"strings"
 )
 
+func NewInsecureHTTPClient() *http.Client {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	return &http.Client{Transport: tr}
+}
+
 type SessionConfig struct {
 	SID  string `json:"sid"`
 	DID  string `json:"did"`
@@ -20,10 +27,7 @@ type SessionConfig struct {
 func FetchSynologyData(url string) (*SynologyResponse, error) {
 	payload := strings.NewReader(BuildCompoundPayload())
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
+	client := NewInsecureHTTPClient()
 
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
@@ -71,10 +75,7 @@ func FetchSynologyData(url string) (*SynologyResponse, error) {
 func FetchSynologyDataWithSession(session *SessionConfig) (*SynologyResponse, error) {
 	payload := strings.NewReader(BuildCompoundPayload())
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
+	client := NewInsecureHTTPClient()
 
 	url := fmt.Sprintf("https://%s/webapi/entry.cgi", session.Host)
 	req, err := http.NewRequest("POST", url, payload)

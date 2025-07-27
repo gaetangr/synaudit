@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
+	"github.com/gaetangr/synaudit/internal/auth"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -42,7 +43,7 @@ var loginCmd = &cobra.Command{
 
 		fmt.Printf("Logging in with user: %s to host: %s\n", user, host)
 
-		loginData, err := authenticateUser(host, user, password)
+		loginData, err := auth.AuthenticateUser(host, user, password)
 		if err != nil {
 			fmt.Printf("Login failed: %v\n", err)
 			return
@@ -50,7 +51,7 @@ var loginCmd = &cobra.Command{
 
 		fmt.Printf("Login successful!\n")
 
-		if err := saveSessionToFile(loginData, host, user); err != nil {
+		if err := auth.SaveSessionToFile(loginData, host, user); err != nil {
 			fmt.Printf("Warning: Could not save session: %v\n", err)
 			fmt.Println("You'll need to login again for each command.")
 		} else {

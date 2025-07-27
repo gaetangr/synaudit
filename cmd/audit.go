@@ -5,6 +5,7 @@ import (
 
 	"github.com/gaetangr/synaudit/internal/api"
 	"github.com/gaetangr/synaudit/internal/audit"
+	"github.com/gaetangr/synaudit/internal/auth"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ var auditCmd = &cobra.Command{
 	Short: "Run security audit on Synology NAS",
 	Long:  `Performs a comprehensive security audit of your Synology NAS and generates a detailed report.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		session, err := loadSessionFromFile()
+		session, err := auth.LoadSessionFromFile()
 		if err != nil {
 			fmt.Printf("Authentication required: %v\n", err)
 			fmt.Println("Please run 'synaudit login' first")
