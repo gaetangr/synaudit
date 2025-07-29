@@ -1,7 +1,6 @@
-# Synaudit
+# Synaudit - Security Auditing Tool for Synology NAS
 
 [![Synaudit Go CI/CD](https://github.com/gaetangr/synaudit/actions/workflows/go.yml/badge.svg)](https://github.com/gaetangr/synaudit/actions/workflows/go.yml)
-
 
 A security auditing tool for Synology NAS systems written in Go.
 
@@ -63,8 +62,6 @@ go build -o synaudit .
 
 ## Usage
 
-
-
 ### Quick Start
 
 1. **Login to your NAS:**
@@ -82,9 +79,37 @@ go build -o synaudit .
 ./synaudit logout
 ```
 
+### Authentication with Two-Factor Authentication (2FA)
+
+If your Synology NAS has 2FA enabled, Synaudit will automatically detect this and prompt you for your authentication code:
+
+```bash
+./synaudit login -u admin -H https://your-synology-ip:5001
+Enter password: [hidden]
+Logging in with user: admin to host: your-synology-ip:5001
+
+🔐 Two-factor authentication required
+Enter your 2FA code (6 digits): [hidden]
+Authenticating with 2FA code...
+✅ Login successful!
+📁 Session saved successfully
+You can now use other commands without logging in again.
+```
+
+**Supported 2FA Methods:**
+- Google Authenticator
+- Authy
+- Any TOTP-compatible authenticator app
+- SMS (if configured in DSM)
+
+**2FA Error Handling:**
+- **Code 403**: 2FA code required - You'll be prompted to enter your 2FA code
+- **Code 404**: Invalid 2FA code - Check your authenticator app and try again
+- **Code 406**: 2FA enforced - 2FA is mandatory for your account
+
 ### Commands
 
-- `login` - Authenticate with your Synology NAS
+- `login` - Authenticate with your Synology NAS (supports 2FA)
 - `audit` - Run local security audit 
 - `logout` - End session and clear credentials
 
@@ -117,6 +142,32 @@ Total issues: 3
 
 Synaudit uses the Synology Web API to gather system information. Since official documentation is limited, many endpoints were discovered through reverse engineering the DSM interface. The tool uses compound requests with session cookies for efficient data collection.
 
+### Security Considerations
+
+- **2FA Support**: Full support for TOTP-based 2FA authentication
+- **Session Management**: Secure session storage with automatic expiration
+- **Local-Only**: All communications happen directly between your computer and your NAS
+- **No Data Collection**: No telemetry, analytics, or external data transmission
+
+## Troubleshooting
+
+### Common Authentication Issues
+
+1. **"2-factor authentication code required"**
+   - Your NAS has 2FA enabled. Enter your 6-digit code from your authenticator app when prompted.
+
+2. **"Failed to authenticate 2-factor authentication code"**
+   - Double-check your authenticator app
+   - Ensure your system time is synchronized
+   - Try generating a new code
+
+3. **"Session expired"**
+   - Run `./synaudit login` again to create a new session
+
+4. **Connection Issues**
+   - Verify your NAS IP address and port
+   - Check if HTTPS is enabled (use port 5001)
+   - Ensure your NAS is accessible from your network
 
 ## Planned Features
 
@@ -125,6 +176,7 @@ Synaudit uses the Synology Web API to gather system information. Since official 
 - Report export (JSON/HTML/PDF)
 - Scheduled audits
 - Known vulnerabilities (CVE) including recent Synology vulnerabilities such as CVE-2024-10443, CVE-2024-29241, CVE‑2025‑4679
+- Enhanced 2FA support (hardware keys, backup codes)
 - And much more...
 
 ## AI Assistance Disclaimer

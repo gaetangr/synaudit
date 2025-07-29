@@ -1,8 +1,10 @@
+// cmd/login.go - Version avec support 2FA
+
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"regexp"
 	"syscall"
 
 	"github.com/gaetangr/synaudit/internal/auth"
@@ -28,13 +30,6 @@ var loginCmd = &cobra.Command{
 			return
 		}
 
-		hostPattern := `^\d{1,3}(?:\.\d{1,3}){3}:\d{2,5}$`
-		matched, _ := regexp.MatchString(hostPattern, host)
-		if !matched {
-			fmt.Println("Error: host must follow pattern IP:PORT (e.g. 192.168.1.198:8443)")
-			return
-		}
-
 		fmt.Print("Enter password: ")
 		passwordBytes, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
@@ -52,18 +47,44 @@ var loginCmd = &cobra.Command{
 		fmt.Printf("Logging in with user: %s to host: %s\n", user, host)
 
 		loginData, err := auth.AuthenticateUser(host, user, password)
-		if err != nil {
+
+		var twoFactorErr *auth.TwoFactorRequiredError
+		if errors.As(err, &twoFactorErr) {
+			fmt.Printf("\n🔐 Two-factor authentication required\n")
+			fmt.Print("Enter your 2FA code (6 digits): ")
+
+			otpBytes, err := term.ReadPassword(int(syscall.Stdin))
+			if err != nil {
+				fmt.Printf("\nError reading 2FA code: %v\n", err)
+				return
+			}
+			fmt.Println()
+
+			otpCode := string(otpBytes)
+			if otpCode == "" {
+				fmt.Println("Error: 2FA code cannot be empty")
+				return
+			}
+
+			fmt.Println("Authenticating with 2FA code...")
+
+			loginData, err = auth.AuthenticateWith2FA(host, user, password, otpCode)
+			if err != nil {
+				fmt.Printf("2FA Login failed: %v\n", err)
+				return
+			}
+		} else if err != nil {
 			fmt.Printf("Login failed: %v\n", err)
 			return
 		}
 
-		fmt.Printf("Login successful!\n")
+		fmt.Printf("✅ Login successful!\n")
 
 		if err := auth.SaveSessionToFile(loginData, host, user); err != nil {
 			fmt.Printf("Warning: Could not save session: %v\n", err)
 			fmt.Println("You'll need to login again for each command.")
 		} else {
-			fmt.Printf("Session saved successfully\n")
+			fmt.Printf("📁 Session saved successfully\n")
 			fmt.Println("You can now use other commands without logging in again.")
 		}
 	},
@@ -73,5 +94,5 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	loginCmd.Flags().StringP("user", "u", "", "Username for authentication")
-	loginCmd.Flags().StringP("host", "H", "", "IP for your Synology NAS (eg: 192.168.1.198:8443)")
+	loginCmd.Flags().StringP("host", "H", "192.168.1.198:8443", "IP for your Synology NAS (eg: 192.168.1.198:8443)")
 }

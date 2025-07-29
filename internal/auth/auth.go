@@ -1,3 +1,5 @@
+// internal/auth/auth.go - Version améliorée avec support 2FA
+
 package auth
 
 import (
@@ -12,6 +14,14 @@ import (
 )
 
 func AuthenticateUser(host, username, password string) (*LoginData, error) {
+	return authenticateWithRetry(host, username, password, "")
+}
+
+func AuthenticateWith2FA(host, username, password, otpCode string) (*LoginData, error) {
+	return authenticateWithRetry(host, username, password, otpCode)
+}
+
+func authenticateWithRetry(host, username, password, otpCode string) (*LoginData, error) {
 	client := api.NewInsecureHTTPClient()
 
 	data := url.Values{}
@@ -22,6 +32,10 @@ func AuthenticateUser(host, username, password string) (*LoginData, error) {
 	data.Set("passwd", password)
 	data.Set("session", "Synaudit")
 	data.Set("format", "cookie")
+
+	if otpCode != "" {
+		data.Set("otp_code", otpCode)
+	}
 
 	apiURL := fmt.Sprintf("https://%s/webapi/auth.cgi", host)
 
@@ -52,7 +66,23 @@ func AuthenticateUser(host, username, password string) (*LoginData, error) {
 	if !loginResponse.Success {
 		if loginResponse.Error != nil {
 			description := api.GetSynologyErrorDescription(loginResponse.Error.Code)
-			return nil, fmt.Errorf("%s (code: %d)", description, loginResponse.Error.Code)
+
+			switch loginResponse.Error.Code {
+			case 403:
+				return nil, &TwoFactorRequiredError{
+					Code:        loginResponse.Error.Code,
+					Description: description,
+				}
+			case 404:
+				return nil, fmt.Errorf("invalid 2FA code: %s", description)
+			case 406:
+				return nil, &TwoFactorRequiredError{
+					Code:        loginResponse.Error.Code,
+					Description: description,
+				}
+			default:
+				return nil, fmt.Errorf("%s (code: %d)", description, loginResponse.Error.Code)
+			}
 		}
 		return nil, fmt.Errorf("login failed")
 	}
@@ -86,4 +116,17 @@ func LogoutAPI(host, sid string) error {
 	defer resp.Body.Close()
 
 	return nil
+}
+
+type TwoFactorRequiredError struct {
+	Code        int
+	Description string
+}
+
+func (e *TwoFactorRequiredError) Error() string {
+	return fmt.Sprintf("2FA required: %s (code: %d)", e.Description, e.Code)
+}
+
+func (e *TwoFactorRequiredError) Is2FARequired() bool {
+	return true
 }

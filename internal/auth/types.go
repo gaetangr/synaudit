@@ -1,6 +1,8 @@
 package auth
 
-import "time"
+import (
+	"time"
+)
 
 type LoginData struct {
 	DID          string `json:"did"`
@@ -15,6 +17,7 @@ type LoginResponse struct {
 		Code int `json:"code"`
 	} `json:"error,omitempty"`
 }
+
 type SessionConfig struct {
 	SID       string    `json:"sid"`
 	DID       string    `json:"did"`
