@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
 	"syscall"
 
 	"github.com/gaetangr/synaudit/internal/auth"
@@ -24,6 +25,13 @@ var loginCmd = &cobra.Command{
 
 		if host == "" {
 			fmt.Println("Error: host is required")
+			return
+		}
+
+		hostPattern := `^\d{1,3}(?:\.\d{1,3}){3}:\d{2,5}$`
+		matched, _ := regexp.MatchString(hostPattern, host)
+		if !matched {
+			fmt.Println("Error: host must follow pattern IP:PORT (e.g. 192.168.1.198:8443)")
 			return
 		}
 
@@ -65,5 +73,5 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	loginCmd.Flags().StringP("user", "u", "", "Username for authentication")
-	loginCmd.Flags().StringP("host", "H", "192.168.1.198:8443", "IP for your Synology NAS (eg: 192.168.1.198:8443)")
+	loginCmd.Flags().StringP("host", "H", "", "IP for your Synology NAS (eg: 192.168.1.198:8443)")
 }
