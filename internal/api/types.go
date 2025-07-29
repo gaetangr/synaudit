@@ -162,6 +162,20 @@ type SecurityReport struct {
 	Findings  []Finding
 	CheckedAt time.Time
 }
+type LogData struct {
+	Descr           string `json:"descr"`
+	Level           string `json:"level"`
+	LogType         string `json:"logtype"`
+	OriginalLogType string `json:"orginalLogType"`
+	Time            string `json:"time"`
+	Who             string `json:"who"`
+}
+
+type LogList struct {
+	ErrorCount int       `json:"errorCount"`
+	InfoCount  int       `json:"infoCount"`
+	Items      []LogData `json:"items"`
+}
 
 type APIResult struct {
 	API     string      `json:"api"`

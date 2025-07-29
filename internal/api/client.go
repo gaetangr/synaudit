@@ -177,3 +177,7 @@ func GetQuickConnectData(response SynologyResponse) (QuickConnectData, error) {
 func GetAutoBlockData(response SynologyResponse) (AutoBlockData, error) {
 	return getData[AutoBlockData]("SYNO.Core.Security.AutoBlock", response)
 }
+
+func GetLogData(response SynologyResponse) (LogList, error) {
+	return getData[LogList]("SYNO.Core.SyslogClient.Log", response)
+}

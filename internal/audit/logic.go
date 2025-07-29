@@ -8,6 +8,33 @@ import (
 	"github.com/gaetangr/synaudit/internal/api"
 )
 
+func CheckWarnConnexionLogs(logList api.LogList) []api.Finding {
+	var findings []api.Finding
+	now := time.Now()
+	count := 0
+	for _, log := range logList.Items {
+		lt := strings.ToLower(log.LogType)
+		if (lt == "connection" || lt == "connexion") && strings.ToLower(log.Level) == "warn" {
+			t, err := time.Parse("2006/01/02 15:04:05", log.Time)
+			if err != nil {
+				continue
+			}
+			if now.Sub(t) <= 72*time.Hour {
+				count++
+			}
+		}
+		fmt.Printf("[DEBUG] log: level=%s, logtype=%s, time=%s\n", log.Level, log.LogType, log.Time)
+	}
+	fmt.Printf("[DEBUG] Warn Connexion logs in last 3 days: %d\n", count)
+	if count > 2 {
+		findings = append(findings, api.Finding{
+			Title:       "Multiple failed connection attempts detected",
+			Description: "There have been more than 2 warning-level connection events in the last 3 days.",
+			Remediation: "Review recent connection attempts and investigate possible unauthorized access attempts.",
+		})
+	}
+	return findings
+}
 func IsAdminDisabled(userListData api.UserListData) (bool, error) {
 	for _, user := range userListData.Users {
 		if user.Name == api.AdminUsername {
@@ -277,6 +304,15 @@ func GenerateReport(response api.SynologyResponse) (*api.SecurityReport, error) 
 				return nil, err
 			}
 			return CheckAutoBlockPolicy(data), nil
+		},
+		"connexion_logs": func() ([]api.Finding, error) {
+			data, err := api.GetLogData(response)
+			if err != nil {
+				return nil, err
+			}
+			// Vérifie que data est bien de type LogList et contient bien les logs
+			fmt.Printf("[DEBUG] LogList items count: %d\n", len(data.Items))
+			return CheckWarnConnexionLogs(data), nil
 		},
 	}
 

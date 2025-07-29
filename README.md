@@ -27,6 +27,7 @@ Password is not stored in the tool nor your terminal history.
 - Admin account status
 - 2FA enforcement for admin accounts
 - Password policy analysis (length, complexity, history, expiration)
+- Detection of suspect login attempts (multiple failed logins, brute force)
 
 **Network & Firewall**
 - Firewall status
